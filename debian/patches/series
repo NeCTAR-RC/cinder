@@ -1,0 +1,6 @@
+fix_cinder_dependencies.patch
+
+# Heavily modified - Sam
+backports/1202648.patch
+
+nectar/fix_manifest.patch

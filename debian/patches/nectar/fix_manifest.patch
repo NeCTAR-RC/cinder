@@ -1,0 +1,66 @@
+diff --git a/MANIFEST.in b/MANIFEST.in
+index c978a52..80cf4a5 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -4,3 +4,61 @@ exclude .gitignore
+ exclude .gitreview
+ 
+ global-exclude *.pyc
++
++include cinder/api/schemas/atom-link.rng
++include cinder/api/schemas/v1.1/extension.rng
++include cinder/api/schemas/v1.1/extensions.rng
++include cinder/api/schemas/v1.1/limits.rng
++include cinder/api/schemas/v1.1/metadata.rng
++include cinder/db/sqlalchemy/migrate_repo/README
++include cinder/db/sqlalchemy/migrate_repo/migrate.cfg
++include cinder/db/sqlalchemy/migrate_repo/versions/005_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/007_sqlite_downgrade.sql
++include cinder/locale/bs/LC_MESSAGES/cinder.po
++include cinder/locale/cinder.pot
++include cinder/locale/cs/LC_MESSAGES/cinder.po
++include cinder/locale/da/LC_MESSAGES/cinder.po
++include cinder/locale/de/LC_MESSAGES/cinder.po
++include cinder/locale/en_AU/LC_MESSAGES/cinder.po
++include cinder/locale/en_GB/LC_MESSAGES/cinder.po
++include cinder/locale/es/LC_MESSAGES/cinder.po
++include cinder/locale/fr/LC_MESSAGES/cinder.po
++include cinder/locale/it/LC_MESSAGES/cinder.po
++include cinder/locale/ja/LC_MESSAGES/cinder.po
++include cinder/locale/ko/LC_MESSAGES/cinder.po
++include cinder/locale/pt_BR/LC_MESSAGES/cinder.po
++include cinder/locale/ru/LC_MESSAGES/cinder.po
++include cinder/locale/tl/LC_MESSAGES/cinder.po
++include cinder/locale/tr/LC_MESSAGES/cinder.po
++include cinder/locale/uk/LC_MESSAGES/cinder.po
++include cinder/locale/zh_CN/LC_MESSAGES/cinder.po
++include cinder/locale/zh_TW/LC_MESSAGES/cinder.po
++include cinder/openstack/common/README
++include cinder/testing/README.rst
++include cinder/tests/policy.json
++include cinder/tests/test_migrations.conf
++include cinder/tests/var/ca.crt
++include cinder/tests/var/certificate.crt
++include cinder/tests/var/privatekey.key
++include cinder/tests/windows/stubs/README.rst
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_check_for_setup_errors_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_export_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_export_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_snapshot_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_snapshot_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_volume_from_snapshot_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_volume_from_snapshot_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_volume_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_create_volume_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_delete_snapshot_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_delete_snapshot_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_delete_volume_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_delete_volume_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_ensure_export_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_ensure_export_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_initialize_connection_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_initialize_connection_wmi.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_remove_export_os.p.gz
++include cinder/tests/windows/stubs/test_windows.TestWindowsDriver.test_remove_export_wmi.p.gz
++include cinder/volume/drivers/emc/cinder_emc_config.xml.sample
++include cinder/volume/drivers/huawei/cinder_huawei_conf.xml.sample

@@ -1,0 +1,147 @@
+diff --git a/cinder/tests/test_volume.py b/cinder/tests/test_volume.py
+index 182b5e9..11495e2 100644
+--- a/cinder/tests/test_volume.py
++++ b/cinder/tests/test_volume.py
+@@ -83,7 +83,7 @@ class VolumeTestCase(test.TestCase):
+ 
+     @staticmethod
+     def _create_volume(size=0, snapshot_id=None, image_id=None,
+-                       metadata=None):
++                       metadata=None, availability_zone=None):
+         """Create a volume object."""
+         vol = {}
+         vol['size'] = size
+@@ -91,7 +91,8 @@ class VolumeTestCase(test.TestCase):
+         vol['image_id'] = image_id
+         vol['user_id'] = 'fake'
+         vol['project_id'] = 'fake'
+-        vol['availability_zone'] = FLAGS.storage_availability_zone
++        vol['availability_zone'] = \
++            availability_zone or FLAGS.storage_availability_zone
+         vol['status'] = "creating"
+         vol['attach_status'] = "detached"
+         vol['host'] = FLAGS.host
+@@ -259,6 +260,33 @@ class VolumeTestCase(test.TestCase):
+         self.volume.delete_snapshot(self.context, snapshot_id)
+         self.volume.delete_volume(self.context, volume_src['id'])
+ 
++    def test_create_volume_from_snapshot_fail_wrong_az(self):
++        """Test volume can't be created from snapshot in a different az."""
++        volume_api = cinder.volume.api.API()
++
++        volume_src = self._create_volume(availability_zone='az2')
++        self.volume.create_volume(self.context, volume_src['id'])
++        snapshot = self._create_snapshot(volume_src['id'])
++        self.volume.create_snapshot(self.context, volume_src['id'],
++                                    snapshot['id'])
++        snapshot = db.snapshot_get(self.context, snapshot['id'])
++
++        volume_dst = volume_api.create(self.context,
++                                       size=1,
++                                       name='fake_name',
++                                       description='fake_desc',
++                                       snapshot=snapshot)
++        self.assertEqual(volume_dst['availability_zone'], 'az2')
++
++        self.assertRaises(exception.InvalidInput,
++                          volume_api.create,
++                          self.context,
++                          size=1,
++                          name='fake_name',
++                          description='fake_desc',
++                          snapshot=snapshot,
++                          availability_zone='nova')
++
+     def test_too_big_volume(self):
+         """Ensure failure if a too large of a volume is requested."""
+         # FIXME(vish): validation needs to move into the data layer in
+@@ -863,6 +891,31 @@ class VolumeTestCase(test.TestCase):
+         snap = db.snapshot_get(context.get_admin_context(), snapshot['id'])
+         self.assertEquals(snap['display_name'], 'test update name')
+ 
++    def test_create_volume_from_sourcevol_fail_wrong_az(self):
++        """Test volume can't be cloned from an other volume in different az."""
++        volume_api = cinder.volume.api.API()
++
++        volume_src = self._create_volume(availability_zone='az2')
++        self.volume.create_volume(self.context, volume_src['id'])
++
++        volume_src = db.volume_get(self.context, volume_src['id'])
++
++        volume_dst = volume_api.create(self.context,
++                                       size=1,
++                                       name='fake_name',
++                                       description='fake_desc',
++                                       source_volume=volume_src)
++        self.assertEqual(volume_dst['availability_zone'], 'az2')
++
++        self.assertRaises(exception.InvalidInput,
++                          volume_api.create,
++                          self.context,
++                          size=1,
++                          name='fake_name',
++                          description='fake_desc',
++                          source_volume=volume_src,
++                          availability_zone='nova')
++
+ 
+ class DriverTestCase(test.TestCase):
+     """Base Test class for Drivers."""
+diff --git a/cinder/volume/api.py b/cinder/volume/api.py
+index edddd29..eaff51e 100644
+--- a/cinder/volume/api.py
++++ b/cinder/volume/api.py
+@@ -41,9 +41,14 @@ volume_host_opt = cfg.BoolOpt('snapshot_same_host',
+                               default=True,
+                               help='Create volume from snapshot at the host '
+                                    'where snapshot resides')
++volume_same_az_opt = cfg.BoolOpt('cloned_volume_same_az',
++                                 default=True,
++                                 help='Ensure that the new volumes are the '
++                                      'same AZ as snapshot or source volume')
+ 
+ FLAGS = flags.FLAGS
+ FLAGS.register_opt(volume_host_opt)
++FLAGS.register_opt(volume_same_az_opt)
+ flags.DECLARE('storage_availability_zone', 'cinder.volume.manager')
+ 
+ LOG = logging.getLogger(__name__)
+@@ -144,6 +149,28 @@ class API(base.Base):
+                 msg = _('Size of specified image is larger than volume size.')
+                 raise exception.InvalidInput(reason=msg)
+ 
++        if availability_zone is None:
++            if snapshot is not None:
++                snapshot_volume_ref = self.db.volume_get(context, snapshot['volume_id'])
++                availability_zone = snapshot_volume_ref.availability_zone
++            elif source_volume is not None:
++                availability_zone = source_volume['availability_zone']
++            else:
++                availability_zone = FLAGS.storage_availability_zone
++
++        if FLAGS.cloned_volume_same_az:
++            if (snapshot and
++                self.db.volume_get(context, snapshot['volume_id'])['availability_zone'] !=
++                    availability_zone):
++                msg = _("Volume must be in the same "
++                        "availability zone as the snapshot")
++                raise exception.InvalidInput(reason=msg)
++            elif source_volume and \
++                    source_volume['availability_zone'] != availability_zone:
++                msg = _("Volume must be in the same "
++                        "availability zone as the source volume")
++                raise exception.InvalidInput(reason=msg)
++
+         try:
+             reservations = QUOTAS.reserve(context, volumes=1, gigabytes=size)
+         except exception.OverQuota as e:
+@@ -171,9 +197,6 @@ class API(base.Base):
+                                 'd_consumed': _consumed('volumes')})
+                 raise exception.VolumeLimitExceeded(allowed=quotas['volumes'])
+ 
+-        if availability_zone is None:
+-            availability_zone = FLAGS.storage_availability_zone
+-
+         if not volume_type and not source_volume:
+             volume_type = volume_types.get_default_volume_type()
+ 
