@@ -1,0 +1,12 @@
+diff -Naurp cinder-2013.2.rc1.orig/requirements.txt cinder-2013.2.rc1/requirements.txt
+--- cinder-2013.2.rc1.orig/requirements.txt	2013-10-04 05:11:50.000000000 -0400
++++ cinder-2013.2.rc1/requirements.txt	2013-10-04 08:33:32.072164528 -0400
+@@ -20,7 +20,7 @@ python-novaclient>=2.15.0
+ python-swiftclient>=1.5
+ Routes>=1.12.3
+ six
+-SQLAlchemy>=0.7.8,<=0.7.99
++SQLAlchemy>=0.7.8,<=0.8.99
+ sqlalchemy-migrate>=0.7.2
+ stevedore>=0.10
+ suds>=0.4

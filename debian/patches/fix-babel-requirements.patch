@@ -1,0 +1,17 @@
+Author: Revert new babel requirements.
+Author: Chuck Short <zulcss@ubuntu.com>
+Forwarded: No, https://review.openstack.org/#/c/48739/
+diff --git a/requirements.txt b/requirements.txt
+index 219962d..01ec2e6 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -2,7 +2,7 @@ pbr>=0.5.21,<1.0
+ amqplib>=0.6.1
+ anyjson>=0.3.3
+ argparse
+-Babel>=1.3
++Babel>=0.9.6
+ eventlet>=0.13.0
+ greenlet>=0.3.2
+ iso8601>=0.1.4
+

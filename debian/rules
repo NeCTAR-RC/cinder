@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@  --with python2
+
+get-orig-source:
+	uscan --verbose --rename --destdir=../build-area
+
+ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+override_dh_auto_test:
+	testr init && testr run
+endif
+
+override_dh_install:
+	dh_install --fail-missing -Xbin/cinder-all
+
+override_dh_fixperms:
+	dh_fixperms -Xcinder_tgt.conf
+
+override_dh_clean:
+	# temporary workaround for d2to1 wonkyness
+	dh_clean -Xsetup.cfg

@@ -1,0 +1,167 @@
+Source: cinder
+Section: net
+Priority: extra
+Maintainer: Chuck Short <zulcss@ubuntu.com>
+Build-Depends: debhelper (>= 8.0.0), python-all (>= 2.6)
+Build-Depends-Indep:
+ python-amqplib (>= 0.6.1),
+ python-anyjson (>= 0.3.3),
+ python-babel,
+ python-coverage,
+ python-d2to1,
+ python-eventlet (>= 0.13.0),
+ python-fixtures (>= 0.3.14),
+ python-glanceclient (>= 1:0.9.0),
+ python-greenlet (>= 0.3.2),
+ python-hp3parclient (>= 2.0.0),
+ python-iso8601,
+ python-keystoneclient (>= 1:0.3.0),
+ python-kombu (>= 2.5.12),
+ python-lockfile,
+ python-lxml (>= 2.3),
+ python-migrate,
+ python-mock,
+ python-mox,
+ python-mysqldb,
+ python-netaddr,
+ python-novaclient (>= 1:2.15.0),
+ python-oslo.config (>= 1:1.1.0),
+ python-paramiko (>= 1.8),
+ python-paste,
+ python-pastedeploy,
+ python-pbr (>= 0.5.21),
+ python-routes,
+ python-setuptools,
+ python-six,
+ python-sphinx,
+ python-sqlalchemy (>= 0.8.2),
+ python-stevedore (>= 0.10),
+ python-suds,
+ python-swiftclient (>= 1:1.5),
+ python-testtools (>= 0.9.32),
+ python-webob (>= 1.2.3),
+ testrepository (>= 0.0.17)
+Standards-Version: 3.9.4
+Homepage: http://launchpad.net/cinder
+Vcs-Browser: http://bazaar.launchpad.net/~ubuntu-server-dev/cinder/havana/files
+Vcs-Bzr: https://code.launchpad.net/~ubuntu-server-dev/cinder/havana
+XS-Testsuite: autopkgtest
+
+Package: python-cinder
+Section: python
+Architecture: all
+Depends:
+ python-amqplib (>= 0.6.1),
+ python-anyjson (>= 0.3.3),
+ python-babel,
+ python-eventlet (>= 0.13.0),
+ python-glanceclient (>= 1:0.9.0),
+ python-greenlet (>= 0.3.2),
+ python-iso8601,
+ python-keystoneclient (>= 1:0.3.0),
+ python-kombu (>= 2.5.12),
+ python-lockfile,
+ python-lxml (>= 2.3),
+ python-migrate,
+ python-netaddr,
+ python-novaclient (>= 1:2.12.0),
+ python-oslo.config (>= 1:1.1.0),
+ python-paramiko (>= 1.8),
+ python-paste,
+ python-pastedeploy,
+ python-routes,
+ python-six,
+ python-sqlalchemy (>= 0.8.2),
+ python-stevedore (>= 0.10),
+ python-suds,
+ python-swiftclient (>= 1:1.5),
+ python-webob (>= 1.2.3),
+ ${misc:Depends},
+ ${python:Depends}
+Suggests: python-ceph, python-hp3parclient
+Description: Cinder Python libraries
+ OpenStack is a reliable cloud infrastructure. Its mission is to produce
+ the ubiquitous cloud computing platform that will meet the needs of public
+ and private cloud providers regardless of size, by being simple to implement
+ and massively scalable.
+ .
+ Cinder is the OpenStack Block storage service.
+ .
+ This package contains the Python library for Cinder.
+
+Package: cinder-common
+Architecture: all
+Depends:
+ adduser,
+ python-cinder (= ${binary:Version}),
+ ${misc:Depends},
+ ${python:Depends}
+Provides: ${python:Provides}
+Description: Cinder storage service - common files
+ OpenStack is a reliable cloud infrastructure. Its mission is to produce
+ the ubiquitous cloud computing platform that will meet the needs of public
+ and private cloud providers regardless of size, by being simple to implement
+ and massively scalable.
+ .
+ Cinder is the OpenStack Block storage service.
+ .
+ This package contains commons components for Cinder.
+
+Package: cinder-api
+Architecture: all
+Depends: cinder-common (= ${binary:Version}), ${misc:Depends}, ${python:Depends}
+Description: Cinder storage service - API server
+ OpenStack is a reliable cloud infrastructure. Its mission is to produce
+ the ubiquitous cloud computing platform that will meet the needs of public
+ and private cloud providers regardless of size, by being simple to implement
+ and massively scalable.
+ .
+ Cinder is the OpenStack Block storage service.
+ .
+ This package contains the Cinder API server.
+
+Package: cinder-volume
+Architecture: all
+Depends:
+ cinder-common (= ${binary:Version}),
+ lvm2,
+ tgt,
+ ${misc:Depends},
+ ${python:Depends}
+Breaks: cinder-common ( <= 2012.2~rc1~20120907.1154-0ubuntu1 )
+Replaces: cinder-common ( <= 2012.2~rc1~20120907.1154-0ubuntu1 )
+Description: Cinder storage service - Volume server
+ OpenStack is a reliable cloud infrastructure. Its mission is to produce
+ the ubiquitous cloud computing platform that will meet the needs of public
+ and private cloud providers regardless of size, by being simple to implement
+ and massively scalable.
+ .
+ Cinder is the OpenStack Block storage service.
+ .
+ This package contains the Cinder Volume server.
+
+Package: cinder-scheduler
+Architecture: all
+Depends: cinder-common (= ${binary:Version}), ${misc:Depends}, ${python:Depends}
+Description: Cinder storage service - Scheduler server
+ OpenStack is a reliable cloud infrastructure. Its mission is to produce
+ the ubiquitous cloud computing platform that will meet the needs of public
+ and private cloud providers regardless of size, by being simple to implement
+ and massively scalable.
+ .
+ Cinder is the OpenStack Block storage service.
+ .
+ This package contains the Cinder Scheduler server.
+
+Package: cinder-backup
+Architecture: all
+Depends: cinder-common (= ${binary:Version}), ${misc:Depends}, ${python:Depends}
+Description: Cinder storage service - Scheduler server
+ OpenStack is a reliable cloud infrastructure. Its mission is to produce
+ the ubiquitous cloud computing platform that will meet the needs of public
+ and private cloud providers regardless of size, by being simple to implement
+ and massively scalable.
+ .
+ Cinder is the OpenStack Block storage service.
+ .
+ This package contains the Cinder backup service.
