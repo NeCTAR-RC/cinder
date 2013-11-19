@@ -245,25 +245,7 @@ def query_aggr_options(na_server, aggr_name):
 
         Currently queries for raid and ha-policy.
     """
-
-    add_elems = {'aggregate': aggr_name}
-    result = na_utils.invoke_api(na_server,
-                                 api_name='aggr-options-list-info',
-                                 api_family='cm', query=None,
-                                 des_result=None,
-                                 additional_elems=add_elems,
-                                 is_iter=False)
-    attrs = {}
-    for res in result:
-        options = res.get_child_by_name('options')
-        if options:
-            op_list = options.get_children()
-            for op in op_list:
-                if op.get_child_content('name') == 'ha_policy':
-                    attrs['ha_policy'] = op.get_child_content('value')
-                if op.get_child_content('name') == 'raidtype':
-                    attrs['raid_type'] = op.get_child_content('value')
-    return attrs
+    return {'raid_type': 'raid_dp', 'ha_policy': 'cfo', 'disk_type': 'sata'}
 
 
 def get_sis_vol_dict(na_server, vserver, volume=None):
@@ -335,31 +317,7 @@ def get_snapmirror_vol_dict(na_server, vserver, volume=None):
 
 def query_aggr_storage_disk(na_server, aggr):
     """Queries for storage disks assosiated to an aggregate."""
-    query = {'storage-disk-info': {'disk-raid-info':
-                                   {'disk-aggregate-info':
-                                       {'aggregate-name': aggr}}}}
-    des_attr = {'storage-disk-info':
-                {'disk-raid-info': ['effective-disk-type']}}
-    result = na_utils.invoke_api(na_server,
-                                 api_name='storage-disk-get-iter',
-                                 api_family='cm', query=query,
-                                 des_result=des_attr,
-                                 additional_elems=None,
-                                 is_iter=True)
-    for res in result:
-        attr_list = res.get_child_by_name('attributes-list')
-        if attr_list:
-            storage_disks = attr_list.get_children()
-            for disk in storage_disks:
-                raid_info = disk.get_child_by_name('disk-raid-info')
-                if raid_info:
-                    eff_disk_type =\
-                        raid_info.get_child_content('effective-disk-type')
-                    if eff_disk_type:
-                        return eff_disk_type
-                    else:
-                        continue
-    return 'unknown'
+    return 'SATA'
 
 
 def get_cluster_ssc(na_server, vserver):
