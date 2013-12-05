@@ -1,2 +1,3 @@
 fix-sqlalchemy-requirements.patch
 fix-babel-requirements.patch
+nectar/fix-manifest.patch
