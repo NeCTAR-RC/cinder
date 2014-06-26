@@ -359,19 +359,19 @@ def volume_admin_metadata_update(context, volume_id, metadata, delete):
 ##################
 
 
-def volume_type_create(context, values):
+def volume_type_create(context, values, projects=None):
     """Create a new volume type."""
-    return IMPL.volume_type_create(context, values)
+    return IMPL.volume_type_create(context, values, projects)
 
 
-def volume_type_get_all(context, inactive=False):
+def volume_type_get_all(context, inactive=False, filters=None):
     """Get all volume types."""
-    return IMPL.volume_type_get_all(context, inactive)
+    return IMPL.volume_type_get_all(context, inactive, filters)
 
 
-def volume_type_get(context, id, inactive=False):
+def volume_type_get(context, id, inactive=False, expected_fields=None):
     """Get volume type by id."""
-    return IMPL.volume_type_get(context, id, inactive)
+    return IMPL.volume_type_get(context, id, inactive, expected_fields)
 
 
 def volume_type_get_by_name(context, name):
@@ -418,6 +418,21 @@ def volume_get_active_by_window(context, begin, end=None, project_id=None):
     Specifying a project_id will filter for a certain project.
     """
     return IMPL.volume_get_active_by_window(context, begin, end, project_id)
+
+
+def volume_type_access_get_all(context, type_id):
+    """Get all volume type access of a volume type."""
+    return IMPL.volume_type_access_get_all(context, type_id)
+
+
+def volume_type_access_add(context, type_id, project_id):
+    """Add volume type access for project."""
+    return IMPL.volume_type_access_add(context, type_id, project_id)
+
+
+def volume_type_access_remove(context, type_id, project_id):
+    """Remove volume type access for project."""
+    return IMPL.volume_type_access_remove(context, type_id, project_id)
 
 
 ####################
