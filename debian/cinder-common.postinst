@@ -19,12 +19,6 @@ if [ "$1" = "configure" ]; then
     chmod 0755 /etc/cinder/rootwrap.d
     chown root:root /etc/cinder/rootwrap.conf
 
-    if ! grep -qE "^(sql_)?connection.*" /etc/cinder/cinder.conf || \
-         grep -qE "^(sql_)?connection.*sqlite.*" /etc/cinder/cinder.conf
-    then
-        su -s /bin/sh -c 'cinder-manage db sync' cinder
-    fi
-
     if [ -e /var/lib/cinder/cinder.sqlite ]; then
         chown cinder:cinder /var/lib/cinder/cinder.sqlite
         chmod 0600 /var/lib/cinder/cinder.sqlite
