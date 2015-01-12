@@ -1,8 +1,6 @@
-diff --git a/MANIFEST.in b/MANIFEST.in
-index c978a52..5809cd7 100644
 --- a/MANIFEST.in
 +++ b/MANIFEST.in
-@@ -3,4 +3,62 @@ include ChangeLog
+@@ -3,4 +3,62 @@
  exclude .gitignore
  exclude .gitreview
  
