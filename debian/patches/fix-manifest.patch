@@ -1,0 +1,67 @@
+diff --git a/MANIFEST.in b/MANIFEST.in
+index c978a52..5809cd7 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -3,4 +3,62 @@ include ChangeLog
+ exclude .gitignore
+ exclude .gitreview
+ 
++include cinder/db/sqlalchemy/migrate_repo/README
++include cinder/db/sqlalchemy/migrate_repo/migrate.cfg
++include cinder/db/sqlalchemy/migrate_repo/versions/012_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/014_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/013_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/005_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/007_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/011_sqlite_downgrade.sql
++include cinder/locale/cinder-log-info.pot
++include cinder/locale/cinder-log-error.pot
++include cinder/locale/cinder-log-critical.pot
++include cinder/locale/cinder-log-warning.pot
++include cinder/locale/cinder.pot
++include cinder/locale/en_AU/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/en_AU/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/zh_CN/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/zh_CN/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/it/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/it/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/pt_BR/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/pt_BR/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/ko_KR/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/ko_KR/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/vi_VN/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/es/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/es/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/te_IN/LC_MESSAGES/cinder-log-warning.po
++include cinder/locale/te_IN/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/en_GB/LC_MESSAGES/cinder-log-warning.po
++include cinder/locale/en_GB/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/en_GB/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/zh_TW/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/zh_TW/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/fr/LC_MESSAGES/cinder-log-warning.po
++include cinder/locale/fr/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/fr/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/ja/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/ja/LC_MESSAGES/cinder-log-info.po
++include cinder/locale/de/LC_MESSAGES/cinder-log-error.po
++include cinder/locale/de/LC_MESSAGES/cinder-log-info.po
++include cinder/testing/README.rst
++include cinder/volume/drivers/vmware/wsdl/5.5/pbmService.wsdl
++include cinder/volume/drivers/vmware/wsdl/5.5/pbm.wsdl
++include cinder/volume/drivers/vmware/wsdl/5.5/pbm-types.xsd
++include cinder/volume/drivers/vmware/wsdl/5.5/pbm-messagetypes.xsd
++include cinder/volume/drivers/vmware/wsdl/5.5/core-types.xsd
++include cinder/brick/README.txt
++include cinder/api/schemas/atom-link.rng
++include cinder/api/schemas/v1.1/qos_association.rng
++include cinder/api/schemas/v1.1/limits.rng
++include cinder/api/schemas/v1.1/extensions.rng
++include cinder/api/schemas/v1.1/qos_spec.rng
++include cinder/api/schemas/v1.1/qos_associations.rng
++include cinder/api/schemas/v1.1/qos_specs.rng
++include cinder/api/schemas/v1.1/extension.rng
++include cinder/api/schemas/v1.1/metadata.rng
++include cinder/openstack/common/README
++
+ global-exclude *.pyc
