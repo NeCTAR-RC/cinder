@@ -28,7 +28,7 @@ from cinder.db import base
 from cinder import exception
 from cinder.openstack.common import log as logging
 from cinder import utils
-
+from cinder.volume import utils as volume_utils
 import cinder.policy
 import cinder.volume
 
@@ -114,7 +114,7 @@ class API(base.Base):
         if volume['status'] != "available":
             msg = _('Volume to be backed up must be available')
             raise exception.InvalidVolume(reason=msg)
-        volume_host = volume['host'].partition('@')[0]
+        volume_host = volume_utils.extract_host(volume['host'], 'host')
         if not self._is_backup_service_enabled(volume, volume_host):
             raise exception.ServiceNotFound(service_id='cinder-backup')
 
