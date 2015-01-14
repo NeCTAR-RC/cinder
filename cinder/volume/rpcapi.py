@@ -24,7 +24,13 @@ from cinder import rpc
 from cinder.volume import utils
 
 
+icehouse_compat_opt = cfg.BoolOpt('icehouse_compat',
+                                  default=False,
+                                  help='Send calls that a compatible with '
+                                  'icehouse volume hosts')
+
 CONF = cfg.CONF
+CONF.register_opt(icehouse_compat_opt)
 
 
 class VolumeAPI(object):
@@ -104,16 +110,26 @@ class VolumeAPI(object):
         new_host = utils.extract_host(host)
         cctxt = self.client.prepare(server=new_host, version='1.4')
         request_spec_p = jsonutils.to_primitive(request_spec)
-        cctxt.cast(ctxt, 'create_volume',
-                   volume_id=volume['id'],
-                   request_spec=request_spec_p,
-                   filter_properties=filter_properties,
-                   allow_reschedule=allow_reschedule,
-                   snapshot_id=snapshot_id,
-                   image_id=image_id,
-                   source_replicaid=source_replicaid,
-                   source_volid=source_volid,
-                   consistencygroup_id=consistencygroup_id)
+        if CONF.icehouse_compat:
+            cctxt.cast(ctxt, 'create_volume',
+                       volume_id=volume['id'],
+                       request_spec=request_spec_p,
+                       filter_properties=filter_properties,
+                       allow_reschedule=allow_reschedule,
+                       snapshot_id=snapshot_id,
+                       image_id=image_id,
+                       source_volid=source_volid)
+        else:
+            cctxt.cast(ctxt, 'create_volume',
+                       volume_id=volume['id'],
+                       request_spec=request_spec_p,
+                       filter_properties=filter_properties,
+                       allow_reschedule=allow_reschedule,
+                       snapshot_id=snapshot_id,
+                       image_id=image_id,
+                       source_replicaid=source_replicaid,
+                       source_volid=source_volid,
+                       consistencygroup_id=consistencygroup_id)
 
     def delete_volume(self, ctxt, volume, unmanage_only=False):
         new_host = utils.extract_host(volume['host'])
