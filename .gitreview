@@ -1,5 +1,5 @@
 [gerrit]
-host=review.openstack.org
+host=review.rc.nectar.org.au
 port=29418
-project=openstack/cinder.git
-defaultbranch=stable/kilo
+project=NeCTAR-RC/cinder.git
+defaultbranch=nectar/kilo
