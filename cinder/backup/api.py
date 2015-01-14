@@ -31,6 +31,8 @@ from cinder import utils
 
 import cinder.policy
 import cinder.volume
+from cinder.volume import utils as volume_utils
+
 
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
@@ -114,7 +116,7 @@ class API(base.Base):
         if volume['status'] != "available":
             msg = _('Volume to be backed up must be available')
             raise exception.InvalidVolume(reason=msg)
-        volume_host = volume['host'].partition('@')[0]
+        volume_host = volume_utils.extract_host(volume['host'], 'host')
         if not self._is_backup_service_enabled(volume, volume_host):
             raise exception.ServiceNotFound(service_id='cinder-backup')
 
