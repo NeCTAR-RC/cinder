@@ -22,7 +22,7 @@ import urllib2
 
 import mock
 from oslo.config import cfg
-from oslo.i18n import fixture as i18n_fixture
+from oslo_i18n import fixture as i18n_fixture
 import testtools
 import webob
 import webob.dec
