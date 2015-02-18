@@ -62,11 +62,16 @@ az_cache_time_opt = cfg.IntOpt('az_cache_duration',
                                help='Cache volume availability zones in '
                                     'memory for the provided duration in '
                                     'seconds')
+ensure_az_opt = cfg.BoolOpt('ensure_az',
+                            default=False,
+                            help='Force users to specify AZ on volume  '
+                                 'creation')
 
 CONF = cfg.CONF
 CONF.register_opt(volume_host_opt)
 CONF.register_opt(volume_same_az_opt)
 CONF.register_opt(az_cache_time_opt)
+CONF.register_opt(ensure_az_opt)
 
 CONF.import_opt('glance_core_properties', 'cinder.image.glance')
 CONF.import_opt('storage_availability_zone', 'cinder.volume.manager')
@@ -170,6 +175,11 @@ class API(base.Base):
                     '(size argument must be an integer (or string '
                     'represenation or an integer) and greater '
                     'than zero).')
+            raise exception.InvalidInput(reason=msg)
+
+        if CONF.ensure_az and not availability_zone:
+            msg = _("availability_zone must be provided when creating "
+                    "a volume.")
             raise exception.InvalidInput(reason=msg)
 
         if consistencygroup:
