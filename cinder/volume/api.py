@@ -172,6 +172,11 @@ class API(base.Base):
                     'than zero).')
             raise exception.InvalidInput(reason=msg)
 
+        if not availability_zone:
+            msg = _("availability_zone must be provided when creating "
+                    "a volume.")
+            raise exception.InvalidInput(reason=msg)
+
         if consistencygroup:
             if not volume_type:
                 msg = _("volume_type must be provided when creating "
