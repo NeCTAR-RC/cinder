@@ -3183,3 +3183,24 @@ class VolumeTestCaseLocks(base.BaseVolumeTestCase):
         # make sure it is gone
         self.assertRaises(exception.VolumeNotFound, db.volume_get,
                           self.context, src_vol.id)
+
+    def test_create_volume_with_az_enforced(self):
+        """Test volume can be created when AZ is enforced."""
+        self.override_config('ensure_az', True)
+        volume_api = cinder.volume.api.API()
+
+        volume = volume_api.create(
+            self.context, 1, 'name', 'description',
+            availability_zone=CONF.storage_availability_zone)
+
+        self.assertEqual(CONF.storage_availability_zone,
+                         volume.availability_zone)
+
+    def test_create_volume_with_az_enforced_fail(self):
+        """Test volume create fails when AZ is enforced and no AZ specified."""
+        self.override_config('ensure_az', True)
+        volume_api = cinder.volume.api.API()
+
+        self.assertRaises(exception.InvalidInput,
+                          volume_api.create, self.context, 1, 'name',
+                          'description')
