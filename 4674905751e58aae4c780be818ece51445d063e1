@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa2559ec_7fca93a2",
+        "filename": "cinder/volume/api.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 191,
+      "author": {
+        "id": 1000084
+      },
+      "writtenOn": "2015-02-20T03:23:56Z",
+      "side": 1,
+      "message": "so what happens in the case where get_volume_type_by_name can\u0027t find a volume_type.  is there an error that needs to be caught?  we should also log if there is a misconfiguration.",
+      "range": {
+        "startLine": 189,
+        "startChar": 0,
+        "endLine": 191,
+        "endChar": 43
+      },
+      "revId": "4674905751e58aae4c780be818ece51445d063e1",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5",
+      "unresolved": false
+    }
+  ]
+}
