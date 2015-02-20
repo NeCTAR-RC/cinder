@@ -68,12 +68,17 @@ ensure_az_opt = cfg.BoolOpt('ensure_az',
                             default=False,
                             help='Force users to specify AZ on volume  '
                                  'creation')
+az_as_volume_type_opt = cfg.BoolOpt('az_as_volume_type',
+                                    default=False,
+                                    help='If no volume type specified use  '
+                                         'volume type that matches the AZ')
 
 CONF = cfg.CONF
 CONF.register_opt(volume_host_opt)
 CONF.register_opt(volume_same_az_opt)
 CONF.register_opt(az_cache_time_opt)
 CONF.register_opt(ensure_az_opt)
+CONF.register_opt(az_as_volume_type_opt)
 
 CONF.import_opt('glance_core_properties', 'cinder.image.glance')
 
@@ -193,8 +198,17 @@ class API(base.Base):
                         "a volume.")
                 raise exception.InvalidInput(reason=msg)
 
-        if consistencygroup and not cgsnapshot:
+        if CONF.az_as_volume_type and not volume_type:
+            try:
+                az_start = availability_zone.split('-')[0]
+                volume_type = volume_types.get_volume_type_by_name(
+                    context, az_start)
+            except exception.VolumeTypeNotFoundByName:
+                msg = "Volume type %s not found" % az_start
+                LOG.exception(msg)
+                raise exception.InvalidInput(reason=msg)
 
+        if consistencygroup and not cgsnapshot:
             if not volume_type:
                 msg = _("volume_type must be provided when creating "
                         "a volume in a consistency group.")
