@@ -27,6 +27,7 @@ from cinder.db.sqlalchemy import models
 from cinder import exception
 from cinder import test
 from cinder.tests.unit import conf_fixture
+from cinder.volume import api as cinder_volume_api
 from cinder.volume import qos_specs
 from cinder.volume import volume_types
 
@@ -156,6 +157,31 @@ class VolumeTypeTestCase(test.TestCase):
         total_volume_types = session.query(models.VolumeTypes).count()
         vol_types = volume_types.get_all_types(self.ctxt)
         self.assertEqual(total_volume_types, len(vol_types))
+
+    def test_get_all_volume_types_az_not_shown(self):
+        cfg.CONF.set_default('az_as_volume_type', True)
+        volume_api = cinder_volume_api.API()
+        with mock.patch.object(volume_api.db,
+                               'service_get_all_by_topic') as get_all:
+            get_all.return_value = [
+                {
+                    'availability_zone': cfg.CONF.storage_availability_zone,
+                    'disabled': False,
+                },
+            ]
+            volume_types.create(self.ctxt, 'foo')
+            original_vol_types = volume_types.get_all_types(self.ctxt)
+            original_vol_types_list = volume_types.get_all_types(
+                self.ctxt, list_result=True)
+
+            volume_types.create(self.ctxt, cfg.CONF.storage_availability_zone)
+
+            vol_types = volume_types.get_all_types(self.ctxt)
+            vol_types_list = volume_types.get_all_types(self.ctxt,
+                                                        list_result=True)
+
+            self.assertEqual(original_vol_types, vol_types)
+            self.assertEqual(original_vol_types_list, vol_types_list)
 
     def test_get_default_volume_type(self):
         """Ensures default volume type can be retrieved."""
