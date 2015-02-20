@@ -78,7 +78,8 @@ az_cache_time_opt = cfg.IntOpt('az_cache_duration',
 ensure_az_opt = cfg.BoolOpt('ensure_az',
                             default=False,
                             help='Force users to specify AZ on volume  '
-                                 'creation')
+                            'creation')
+
 
 CONF = cfg.CONF
 CONF.register_opt(allow_force_upload_opt)
@@ -244,6 +245,16 @@ class API(base.Base):
             else:
                 msg = _("availability_zone must be provided when creating "
                         "a volume.")
+                raise exception.InvalidInput(reason=msg)
+
+        if CONF.az_as_volume_type and not volume_type:
+            try:
+                az_start = availability_zone.split('-')[0]
+                volume_type = volume_types.get_volume_type_by_name(
+                    context, az_start)
+            except exception.VolumeTypeNotFoundByName:
+                msg = "Volume type %s not found" % az_start
+                LOG.exception(msg)
                 raise exception.InvalidInput(reason=msg)
 
         if consistencygroup and (not cgsnapshot and not source_cg):

@@ -169,6 +169,28 @@ class VolumeTypeTestCase(test.TestCase):
         vol_types = volume_types.get_all_types(self.ctxt)
         self.assertEqual(total_volume_types, len(vol_types))
 
+    def test_get_all_volume_types_az_not_shown(self):
+        cfg.CONF.set_default('az_as_volume_type', True)
+
+        with mock.patch('cinder.volume.api.API.list_availability_zones',
+                        return_value=[
+                            {'name': cfg.CONF.storage_availability_zone,
+                             'disabled': False},
+                        ]):
+            volume_types.create(self.ctxt, 'foo')
+            original_vol_types = volume_types.get_all_types(self.ctxt)
+            original_vol_types_list = volume_types.get_all_types(
+                self.ctxt, list_result=True)
+
+            volume_types.create(self.ctxt, cfg.CONF.storage_availability_zone)
+
+            vol_types = volume_types.get_all_types(self.ctxt)
+            vol_types_list = volume_types.get_all_types(self.ctxt,
+                                                        list_result=True)
+
+            self.assertEqual(original_vol_types, vol_types)
+            self.assertEqual(original_vol_types_list, vol_types_list)
+
     def test_get_default_volume_type(self):
         """Ensures default volume type can be retrieved."""
         volume_types.create(self.ctxt, conf_fixture.def_vol_type, {})
