@@ -1120,6 +1120,38 @@ class VolumeTestCase(BaseVolumeTestCase):
         self.assertEqual(db_vol_type.get('id'), volume['volume_type_id'])
         self.assertIsNotNone(volume['encryption_key_id'])
 
+    def test_create_volume_with_az_volume_type(self):
+        ctxt = context.get_admin_context()
+        self.override_config('az_as_volume_type', True)
+        az = CONF.storage_availability_zone
+        db.volume_type_create(ctxt,
+                              {'id': '61298380-0c12-11e3-bfd6-4b48424183be',
+                               'name': az})
+
+        volume_api = cinder.volume.api.API()
+
+        db_vol_type = db.volume_type_get_by_name(ctxt, az)
+
+        volume = volume_api.create(self.context,
+                                   1,
+                                   'name',
+                                   'description',
+                                   availability_zone=az)
+        self.assertEqual(db_vol_type.get('id'), volume['volume_type_id'])
+
+    def test_create_volume_with_az_volume_type_fail_no_type(self):
+        self.override_config('az_as_volume_type', True)
+        az = CONF.storage_availability_zone
+
+        volume_api = cinder.volume.api.API()
+        self.assertRaises(exception.InvalidInput,
+                          volume_api.create,
+                          self.context,
+                          1,
+                          'name',
+                          'description',
+                          availability_zone=az)
+
     def test_create_volume_with_provider_id(self):
         volume_params_with_provider_id = dict(provider_id=fake.provider_id,
                                               **self.volume_params)
