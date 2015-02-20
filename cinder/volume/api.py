@@ -66,12 +66,17 @@ ensure_az_opt = cfg.BoolOpt('ensure_az',
                             default=False,
                             help='Force users to specify AZ on volume  '
                                  'creation')
+az_as_volume_type_opt = cfg.BoolOpt('az_as_volume_type',
+                                    default=False,
+                                    help='If no volume type specified use  '
+                                         'volume type that matches the AZ')
 
 CONF = cfg.CONF
 CONF.register_opt(volume_host_opt)
 CONF.register_opt(volume_same_az_opt)
 CONF.register_opt(az_cache_time_opt)
 CONF.register_opt(ensure_az_opt)
+CONF.register_opt(az_as_volume_type_opt)
 
 CONF.import_opt('glance_core_properties', 'cinder.image.glance')
 CONF.import_opt('storage_availability_zone', 'cinder.volume.manager')
@@ -181,6 +186,15 @@ class API(base.Base):
             msg = _("availability_zone must be provided when creating "
                     "a volume.")
             raise exception.InvalidInput(reason=msg)
+
+        if CONF.az_as_volume_type and not volume_type:
+            try:
+                volume_type = volume_types.get_volume_type_by_name(
+                    context, availability_zone)
+            except exception.VolumeTypeNotFoundByName:
+                msg = "Volume type for AZ %s not found" % availability_zone
+                LOG.exception(msg)
+                raise exception.InvalidInput(reason=msg)
 
         if consistencygroup:
             if not volume_type:
