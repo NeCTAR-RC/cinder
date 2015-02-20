@@ -66,6 +66,10 @@ ensure_az_opt = cfg.BoolOpt('ensure_az',
                             default=False,
                             help='Force users to specify AZ on volume  '
                                  'creation')
+volume_type_az_opt = cfg.BoolOpt('volume_type_az',
+                                 default=False,
+                                 help='If no volue type specified use  '
+                                 'volume type that matches the AZ')
 
 CONF = cfg.CONF
 CONF.register_opt(volume_host_opt)
@@ -181,6 +185,10 @@ class API(base.Base):
             msg = _("availability_zone must be provided when creating "
                     "a volume.")
             raise exception.InvalidInput(reason=msg)
+
+        if CONF.volume_type_az and not volume_type:
+            volume_type = volume_types.get_volume_type_by_name(
+                context, availability_zone)
 
         if consistencygroup:
             if not volume_type:
