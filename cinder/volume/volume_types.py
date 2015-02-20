@@ -98,6 +98,13 @@ def get_all_types(context, inactive=0, search_opts=None):
 
     vol_types = db.volume_type_get_all(context, inactive, filters=filters)
 
+    if CONF.az_as_volume_type:
+        from cinder.volume import api as volume_api
+        azs = volume_api.API().list_availability_zones()
+        azs = [x['name'].split('-')[0] for x in azs]
+        for az in azs:
+            if az in vol_types:
+                vol_types.pop(az)
     if search_opts:
         LOG.debug("Searching by: %s", search_opts)
 
