@@ -189,10 +189,11 @@ class API(base.Base):
 
         if CONF.az_as_volume_type and not volume_type:
             try:
+                az_start = availability_zone.split('-')[0]
                 volume_type = volume_types.get_volume_type_by_name(
-                    context, availability_zone)
+                    context, az_start)
             except exception.VolumeTypeNotFoundByName:
-                msg = "Volume type for AZ %s not found" % availability_zone
+                msg = "Volume type %s not found" % az_start
                 LOG.exception(msg)
                 raise exception.InvalidInput(reason=msg)
 
