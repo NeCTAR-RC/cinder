@@ -183,6 +183,8 @@ class API(base.Base):
             raise exception.InvalidInput(reason=msg)
 
         if CONF.ensure_az and not availability_zone:
+            if snapshot:
+                availability_zone = snapshot['volume']['availability_zone']
             msg = _("availability_zone must be provided when creating "
                     "a volume.")
             raise exception.InvalidInput(reason=msg)
