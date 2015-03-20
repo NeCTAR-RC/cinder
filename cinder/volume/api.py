@@ -185,9 +185,10 @@ class API(base.Base):
         if CONF.ensure_az and not availability_zone:
             if snapshot:
                 availability_zone = snapshot['volume']['availability_zone']
-            msg = _("availability_zone must be provided when creating "
-                    "a volume.")
-            raise exception.InvalidInput(reason=msg)
+            else:
+                msg = _("availability_zone must be provided when creating "
+                        "a volume.")
+                raise exception.InvalidInput(reason=msg)
 
         if CONF.az_as_volume_type and not volume_type:
             try:
