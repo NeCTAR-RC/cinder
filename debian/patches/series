@@ -1,2 +1,3 @@
 fix-requirements.patch
 fix-manifest.patch
+oslo-messaging-1.8.1.patch
