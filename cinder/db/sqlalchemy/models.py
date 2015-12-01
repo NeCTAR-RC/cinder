@@ -196,6 +196,26 @@ class VolumeAdminMetadata(BASE, CinderBase):
                           'VolumeAdminMetadata.deleted == False)')
 
 
+class VolumeAttachment(BASE, CinderBase):
+    """Represents a volume attachment for a vm."""
+    __tablename__ = 'volume_attachment'
+    id = Column(String(36), primary_key=True)
+
+    volume_id = Column(String(36), ForeignKey('volumes.id'), nullable=False)
+    volume = relationship(Volume, backref="volume_attachment",
+                          foreign_keys=volume_id,
+                          primaryjoin='and_('
+                          'VolumeAttachment.volume_id == Volume.id,'
+                          'VolumeAttachment.deleted == False)')
+    instance_uuid = Column(String(36))
+    attached_host = Column(String(255))
+    mountpoint = Column(String(255))
+    attach_time = Column(DateTime)
+    detach_time = Column(DateTime)
+    attach_status = Column(String(255))
+    attach_mode = Column(String(255))
+
+
 class VolumeTypes(BASE, CinderBase):
     """Represent possible volume_types of volumes offered."""
     __tablename__ = "volume_types"

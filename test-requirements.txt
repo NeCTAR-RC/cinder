@@ -7,7 +7,7 @@ hacking>=0.9.2,<0.10
 coverage>=3.6,<=3.7.1
 discover
 fixtures>=0.3.14,<=1.0.0
-mock>=1.0
+mock==1.0
 mox>=0.5.3,<=0.5.3
 MySQL-python<=1.2.3
 psycopg2

@@ -269,13 +269,13 @@ class DBAPIVolumeTestCase(BaseTest):
 
     def test_volume_attached_invalid_uuid(self):
         self.assertRaises(exception.InvalidUUID, db.volume_attached, self.ctxt,
-                          42, 'invalid-uuid', None, '/tmp')
+                          None, 42, 'invalid-uuid', None, '/tmp', None)
 
     def test_volume_attached_to_instance(self):
         volume = db.volume_create(self.ctxt, {'host': 'host1'})
         instance_uuid = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
-        db.volume_attached(self.ctxt, volume['id'],
-                           instance_uuid, None, '/tmp')
+        db.volume_attached(self.ctxt, None, volume['id'],
+                           instance_uuid, None, '/tmp', None)
         volume = db.volume_get(self.ctxt, volume['id'])
         self.assertEqual(volume['status'], 'in-use')
         self.assertEqual(volume['mountpoint'], '/tmp')
@@ -286,8 +286,8 @@ class DBAPIVolumeTestCase(BaseTest):
     def test_volume_attached_to_host(self):
         volume = db.volume_create(self.ctxt, {'host': 'host1'})
         host_name = 'fake_host'
-        db.volume_attached(self.ctxt, volume['id'],
-                           None, host_name, '/tmp')
+        db.volume_attached(self.ctxt, None, volume['id'],
+                           None, host_name, '/tmp', None)
         volume = db.volume_get(self.ctxt, volume['id'])
         self.assertEqual(volume['status'], 'in-use')
         self.assertEqual(volume['mountpoint'], '/tmp')
@@ -318,9 +318,9 @@ class DBAPIVolumeTestCase(BaseTest):
 
     def test_volume_detached_from_instance(self):
         volume = db.volume_create(self.ctxt, {})
-        db.volume_attached(self.ctxt, volume['id'],
+        db.volume_attached(self.ctxt, None, volume['id'],
                            'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-                           None, '/tmp')
+                           None, '/tmp', None)
         db.volume_detached(self.ctxt, volume['id'])
         volume = db.volume_get(self.ctxt, volume['id'])
         self.assertEqual('available', volume['status'])
@@ -331,8 +331,8 @@ class DBAPIVolumeTestCase(BaseTest):
 
     def test_volume_detached_from_host(self):
         volume = db.volume_create(self.ctxt, {})
-        db.volume_attached(self.ctxt, volume['id'],
-                           None, 'fake_host', '/tmp')
+        db.volume_attached(self.ctxt, None, volume['id'],
+                           None, 'fake_host', '/tmp', None)
         db.volume_detached(self.ctxt, volume['id'])
         volume = db.volume_get(self.ctxt, volume['id'])
         self.assertEqual('available', volume['status'])

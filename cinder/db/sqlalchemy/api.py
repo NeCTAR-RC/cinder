@@ -1021,12 +1021,38 @@ def volume_allocate_iscsi_target(context, volume_id, host):
 
 
 @require_admin_context
-def volume_attached(context, volume_id, instance_uuid, host_name, mountpoint):
+def volume_attach(context, values):
+    volume_attachment_ref = models.VolumeAttachment()
+    if not values.get('id'):
+        values['id'] = str(uuid.uuid4())
+
+    volume_attachment_ref.update(values)
+    session = get_session()
+    with session.begin():
+        volume_attachment_ref.save(session=session)
+        return volume_attachment_get(context, values['id'],
+                                     session=session)
+
+
+@require_admin_context
+def volume_attached(context, attachment_id, volume_id, instance_uuid, host_name,
+                    mountpoint, attach_mode='rw'):
     if instance_uuid and not uuidutils.is_uuid_like(instance_uuid):
         raise exception.InvalidUUID(uuid=instance_uuid)
 
     session = get_session()
     with session.begin():
+        if attachment_id:
+            volume_attachment_ref = volume_attachment_get(context, attachment_id,
+                                                          session=session)
+            volume_attachment_ref['mountpoint'] = mountpoint
+            volume_attachment_ref['attach_status'] = 'attached'
+            volume_attachment_ref['instance_uuid'] = instance_uuid
+            volume_attachment_ref['attached_host'] = host_name
+            volume_attachment_ref['attach_time'] = timeutils.utcnow()
+            volume_attachment_ref['attach_mode'] = attach_mode
+            volume_attachment_ref.save(session=session)
+
         volume_ref = _volume_get(context, volume_id, session=session)
         volume_ref['status'] = 'in-use'
         volume_ref['mountpoint'] = mountpoint
@@ -1179,10 +1205,75 @@ def volume_destroy(context, volume_id):
                     'updated_at': literal_column('updated_at')})
 
 
-@require_admin_context
-def volume_detached(context, volume_id):
+
+@require_context
+def volume_attachment_get(context, attachment_id, session=None):
+    result = model_query(context, models.VolumeAttachment,
+                         session=session).\
+        filter_by(id=attachment_id).\
+        first()
+    if not result:
+        raise exception.VolumeAttachmentNotFound(filter='attachment_id = %s' %
+                                                 attachment_id)
+    return result
+
+
+@require_context
+def volume_attachment_get_used_by_volume_id(context, volume_id, session=None):
+    result = model_query(context, models.VolumeAttachment,
+                         session=session).\
+        filter_by(volume_id=volume_id).\
+        filter(models.VolumeAttachment.attach_status != 'detached').\
+        all()
+    return result
+
+
+@require_context
+def volume_attachment_get_by_host(context, volume_id, host):
     session = get_session()
     with session.begin():
+        result = model_query(context, models.VolumeAttachment,
+                             session=session).\
+            filter_by(volume_id=volume_id).\
+            filter_by(attached_host=host).\
+            filter(models.VolumeAttachment.attach_status != 'detached').\
+            first()
+        return result
+
+
+@require_context
+def volume_attachment_get_by_instance_uuid(context, volume_id, instance_uuid):
+    session = get_session()
+    with session.begin():
+        result = model_query(context, models.VolumeAttachment,
+                             session=session).\
+            filter_by(volume_id=volume_id).\
+            filter_by(instance_uuid=instance_uuid).\
+            filter(models.VolumeAttachment.attach_status != 'detached').\
+            first()
+        return result
+
+
+@require_admin_context
+def volume_detached(context, volume_id, attachment_id=None):
+    session = get_session()
+    with session.begin():
+        if attachment_id:
+            attachment = None
+            try:
+                attachment = volume_attachment_get(context, attachment_id,
+                                                   session=session)
+            except exception.VolumeAttachmentNotFound:
+                pass
+            # If this is already detached, attachment will be None
+            if attachment:
+                now = timeutils.utcnow()
+                attachment['attach_status'] = 'detached'
+                attachment['detach_time'] = now
+                attachment['deleted'] = True
+                attachment['deleted_at'] = now
+                attachment.save(session=session)
+
         volume_ref = _volume_get(context, volume_id, session=session)
         # Hide status update from user if we're performing a volume migration
         if not volume_ref['migration_status']:

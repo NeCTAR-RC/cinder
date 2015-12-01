@@ -142,7 +142,10 @@ def locked_snapshot_operation(f):
     snapshot e.g. delete SnapA while create volume VolA from SnapA is in
     progress.
     """
-    def lso_inner1(inst, context, snapshot_id, **kwargs):
+    def lso_inner1(inst, context, snapshot_id=None, snapshot=None, **kwargs):
+        if not snapshot_id:
+            snapshot = snapshot.get('cinder_object.data')
+            snapshot_id = snapshot.get('id')
         @utils.synchronized("%s-%s" % (snapshot_id, f.__name__), external=True)
         def lso_inner2(*_args, **_kwargs):
             return f(*_args, **_kwargs)
@@ -153,7 +156,7 @@ def locked_snapshot_operation(f):
 class VolumeManager(manager.SchedulerDependentManager):
     """Manages attachable block storage devices."""
 
-    RPC_API_VERSION = '1.18'
+    RPC_API_VERSION = '1.20'
 
     target = messaging.Target(version=RPC_API_VERSION)
 
@@ -321,7 +324,8 @@ class VolumeManager(manager.SchedulerDependentManager):
     def create_volume(self, context, volume_id, request_spec=None,
                       filter_properties=None, allow_reschedule=True,
                       snapshot_id=None, image_id=None, source_volid=None,
-                      source_replicaid=None, consistencygroup_id=None):
+                      source_replicaid=None, consistencygroup_id=None,
+                      cgsnapshot_id=None):
 
         """Creates the volume."""
         context_saved = context.deepcopy()
@@ -501,8 +505,12 @@ class VolumeManager(manager.SchedulerDependentManager):
 
         return True
 
-    def create_snapshot(self, context, volume_id, snapshot_id):
+    def create_snapshot(self, context, volume_id, snapshot_id=None,
+                        snapshot=None):
         """Creates and exports the snapshot."""
+        if snapshot:
+            snapshot = snapshot.get('cinder_object.data')
+            snapshot_id = snapshot.get('id')
         caller_context = context
         context = context.elevated()
         snapshot_ref = self.db.snapshot_get(context, snapshot_id)
@@ -659,6 +667,15 @@ class VolumeManager(manager.SchedulerDependentManager):
             # also consider adding detach_time?
             self._notify_about_volume_usage(context, volume,
                                             "attach.start")
+
+            values = {'volume_id': volume_id,
+                      'attach_status': 'attaching', }
+
+            try:
+                attachment = self.db.volume_attach(context.elevated(), values)
+                attachment_id = attachment['id']
+            except:
+                attachment_id = None
             self.db.volume_update(context, volume_id,
                                   {"instance_uuid": instance_uuid,
                                    "attached_host": host_name,
@@ -701,10 +718,12 @@ class VolumeManager(manager.SchedulerDependentManager):
                                           {'status': 'error_attaching'})
 
             volume = self.db.volume_attached(context.elevated(),
+                                             attachment_id,
                                              volume_id,
                                              instance_uuid,
                                              host_name_sanitized,
-                                             mountpoint)
+                                             mountpoint,
+                                             mode)
             if volume['migration_status']:
                 self.db.volume_update(context, volume_id,
                                       {'migration_status': None})
@@ -712,7 +731,7 @@ class VolumeManager(manager.SchedulerDependentManager):
         return do_attach()
 
     @locked_volume_operation
-    def detach_volume(self, context, volume_id):
+    def detach_volume(self, context, volume_id, attachment_id=None):
         """Updates db to show volume is detached."""
         # TODO(vish): refactor this into a more general "unreserve"
 
@@ -731,7 +750,16 @@ class VolumeManager(manager.SchedulerDependentManager):
                                       volume_id,
                                       {'status': 'error_detaching'})
 
-        self.db.volume_detached(context.elevated(), volume_id)
+        try:
+            attachments = self.db.volume_attachment_get_used_by_volume_id(
+                context, volume_id)
+        except:
+            attachments = []
+        if len(attachments) == 1:
+            attachment_id = attachments[0].get('id')
+        else:
+            attachment_id = None
+        self.db.volume_detached(context.elevated(), volume_id, attachment_id=attachment_id)
         self.db.volume_admin_metadata_delete(context.elevated(), volume_id,
                                              'attached_mode')
 

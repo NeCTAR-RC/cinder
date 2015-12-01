@@ -1962,8 +1962,8 @@ class VolumeTestCase(BaseVolumeTestCase):
         # create volume and attach to the instance
         volume = tests_utils.create_volume(self.context, **self.volume_params)
         self.volume.create_volume(self.context, volume['id'])
-        db.volume_attached(self.context, volume['id'], instance_uuid,
-                           None, '/dev/sda1')
+        db.volume_attached(self.context, None, volume['id'], instance_uuid,
+                           None, '/dev/sda1', None)
 
         volume_api = cinder.volume.api.API()
         volume = volume_api.get(self.context, volume['id'])
@@ -1981,8 +1981,8 @@ class VolumeTestCase(BaseVolumeTestCase):
         # create volume and attach to the host
         volume = tests_utils.create_volume(self.context, **self.volume_params)
         self.volume.create_volume(self.context, volume['id'])
-        db.volume_attached(self.context, volume['id'], None,
-                           'fake_host', '/dev/sda1')
+        db.volume_attached(self.context, None, volume['id'], None,
+                           'fake_host', '/dev/sda1', None)
 
         volume_api = cinder.volume.api.API()
         volume = volume_api.get(self.context, volume['id'])
@@ -2409,7 +2409,8 @@ class VolumeTestCase(BaseVolumeTestCase):
         instance_uuid = '12345678-1234-5678-1234-567812345678'
         volume = tests_utils.create_volume(self.context, **self.volume_params)
         volume = db.volume_attached(
-            self.context, volume['id'], instance_uuid, 'fake-host', 'vdb')
+            self.context, None, volume['id'], instance_uuid, 'fake-host',
+            'vdb', None)
         volume_api = cinder.volume.api.API()
         volume_api.begin_detaching(self.context, volume)
         volume = db.volume_get(self.context, volume['id'])
@@ -3953,8 +3954,8 @@ class ISCSITestCase(DriverTestCase):
             # each volume has a different mountpoint
             mountpoint = "/dev/sd" + chr((ord('b') + index))
             instance_uuid = '12345678-1234-5678-1234-567812345678'
-            db.volume_attached(self.context, vol_ref['id'], instance_uuid,
-                               mountpoint)
+            db.volume_attached(self.context, None, vol_ref['id'],
+                               instance_uuid, mountpoint, None)
             volume_id_list.append(vol_ref['id'])
 
         return volume_id_list
