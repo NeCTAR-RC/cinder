@@ -87,14 +87,14 @@ def upgrade(migrate_engine):
 
     # we have no reason to keep the columns that now
     # exist in the volume_attachment table
-    mountpoint = volumes.columns.mountpoint
-    volumes.drop_column(mountpoint)
-    instance_uuid = volumes.columns.instance_uuid
-    volumes.drop_column(instance_uuid)
-    attach_time = volumes.columns.attach_time
-    volumes.drop_column(attach_time)
-    attached_host = volumes.columns.attached_host
-    volumes.drop_column(attached_host)
+    #mountpoint = volumes.columns.mountpoint
+    #volumes.drop_column(mountpoint)
+    #instance_uuid = volumes.columns.instance_uuid
+    #volumes.drop_column(instance_uuid)
+    #attach_time = volumes.columns.attach_time
+    #volumes.drop_column(attach_time)
+    #attached_host = volumes.columns.attached_host
+    #volumes.drop_column(attached_host)
 
 
 def downgrade(migrate_engine):
@@ -107,21 +107,21 @@ def downgrade(migrate_engine):
     multiattach = volumes.columns.multiattach
     volumes.drop_column(multiattach)
 
-    attached_host = Column('attached_host', String(length=255))
-    volumes.create_column(attached_host)
-    volumes.update().values(attached_host=None).execute()
+    #attached_host = Column('attached_host', String(length=255))
+    #volumes.create_column(attached_host)
+    #volumes.update().values(attached_host=None).execute()
 
-    attach_time = Column('attach_time', String(length=255))
-    volumes.create_column(attach_time)
-    volumes.update().values(attach_time=None).execute()
+    #attach_time = Column('attach_time', String(length=255))
+    #volumes.create_column(attach_time)
+    #volumes.update().values(attach_time=None).execute()
 
-    instance_uuid = Column('instance_uuid', String(length=36))
-    volumes.create_column(instance_uuid)
-    volumes.update().values(instance_uuid=None).execute()
+    #instance_uuid = Column('instance_uuid', String(length=36))
+    #volumes.create_column(instance_uuid)
+    #volumes.update().values(instance_uuid=None).execute()
 
-    mountpoint = Column('mountpoint', String(length=255))
-    volumes.create_column(mountpoint)
-    volumes.update().values(mountpoint=None).execute()
+    #mountpoint = Column('mountpoint', String(length=255))
+    #volumes.create_column(mountpoint)
+    #volumes.update().values(mountpoint=None).execute()
 
     volume_attachment = Table('volume_attachment', meta, autoload=True)
     attachments = list(volume_attachment.select().execute())
