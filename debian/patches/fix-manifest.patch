@@ -1,0 +1,42 @@
+diff --git a/MANIFEST.in b/MANIFEST.in
+index c978a52..c03fe78 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -4,3 +4,37 @@ exclude .gitignore
+ exclude .gitreview
+ 
+ global-exclude *.pyc
++
++include cinder/db/sqlalchemy/migrate_repo/README
++include cinder/db/sqlalchemy/migrate_repo/versions/012_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/014_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/034_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/013_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/005_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/040_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/007_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/011_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/032_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/versions/033_sqlite_downgrade.sql
++include cinder/db/sqlalchemy/migrate_repo/migrate.cfg
++include cinder/tests/var/ca.crt
++include cinder/tests/var/certificate.crt
++include cinder/tests/var/privatekey.key
++include cinder/tests/policy.json
++include cinder/locale/cinder-log-info.pot
++include cinder/locale/cinder-log-error.pot
++include cinder/locale/cinder-log-critical.pot
++include cinder/locale/cinder-log-warning.pot
++include cinder/locale/cinder.pot
++include cinder/testing/README.rst
++include cinder/brick/README.txt
++include cinder/api/schemas/v1.1/qos_association.rng
++include cinder/api/schemas/v1.1/limits.rng
++include cinder/api/schemas/v1.1/extensions.rng
++include cinder/api/schemas/v1.1/qos_spec.rng
++include cinder/api/schemas/v1.1/qos_associations.rng
++include cinder/api/schemas/v1.1/qos_specs.rng
++include cinder/api/schemas/v1.1/extension.rng
++include cinder/api/schemas/v1.1/metadata.rng
++include cinder/api/schemas/atom-link.rng
++include cinder/openstack/common/README
