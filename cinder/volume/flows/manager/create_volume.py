@@ -240,18 +240,18 @@ class ExtractVolumeSpecTask(flow_utils.CinderTask):
             'volume_size': volume_size,
         }
 
-        if kwargs.get('snapshot_id'):
+        if volume_ref.get('snapshot_id'):
             # We are making a snapshot based volume instead of a raw volume.
             specs.update({
                 'type': 'snap',
-                'snapshot_id': kwargs['snapshot_id'],
+                'snapshot_id': volume_ref['snapshot_id'],
             })
-        elif kwargs.get('source_volid'):
+        elif volume_ref.get('source_volid'):
             # We are making a source based volume instead of a raw volume.
             #
             # NOTE(harlowja): This will likely fail if the source volume
             # disappeared by the time this call occurred.
-            source_volid = kwargs['source_volid']
+            source_volid = volume_ref['source_volid']
             source_volume_ref = self.db.volume_get(context, source_volid)
             specs.update({
                 'source_volid': source_volid,
