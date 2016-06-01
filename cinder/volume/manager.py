@@ -58,6 +58,7 @@ from cinder import flow_utils
 from cinder.i18n import _, _LE, _LI, _LW
 from cinder.image import glance
 from cinder import manager
+from cinder import objects
 from cinder.openstack.common import periodic_task
 from cinder import quota
 from cinder import utils
@@ -172,8 +173,13 @@ def locked_snapshot_operation(f):
     snapshot e.g. delete SnapA while create volume VolA from SnapA is in
     progress.
     """
+    def _get_snapshot_id(snapshot):
+        if 'versioned_object.data' in snapshot:
+            return snapshot['versioned_object.data']['id']
+        else:
+            return snapshot.id
     def lso_inner1(inst, context, snapshot, **kwargs):
-        @utils.synchronized("%s-%s" % (snapshot.id, f.__name__), external=True)
+        @utils.synchronized("%s-%s" % (_get_snapshot_id(snapshot), f.__name__), external=True)
         def lso_inner2(*_args, **_kwargs):
             return f(*_args, **_kwargs)
         return lso_inner2(inst, context, snapshot, **kwargs)
@@ -183,7 +189,7 @@ def locked_snapshot_operation(f):
 class VolumeManager(manager.SchedulerDependentManager):
     """Manages attachable block storage devices."""
 
-    RPC_API_VERSION = '1.23'
+    RPC_API_VERSION = '1.24'
 
     target = messaging.Target(version=RPC_API_VERSION)
 
@@ -410,6 +416,17 @@ class VolumeManager(manager.SchedulerDependentManager):
         if filter_properties is None:
             filter_properties = {}
 
+        if request_spec is None:
+            request_spec = {}
+        if image_id is None:
+            image_id = request_spec.get('image_id', None)
+        if snapshot_id is None:
+            snapshot_id = request_spec.get('snapshot_id', None)
+        if source_volid is None:
+            source_volid = request_spec.get('source_volid', None)
+        if source_replicaid is None:
+            source_replicaid = request_spec.get('source_replicaid', None)
+
         try:
             # NOTE(flaper87): Driver initialization is
             # verified by the task itself.
@@ -632,6 +649,16 @@ class VolumeManager(manager.SchedulerDependentManager):
 
     def create_snapshot(self, context, volume_id, snapshot):
         """Creates and exports the snapshot."""
+
+        # Support Liberty snapshot call
+        if 'versioned_object.data' in snapshot:
+            snapshot['cinder_object.data'] = snapshot['versioned_object.data']
+            snapshot['cinder_object.name'] = snapshot['versioned_object.name']
+            snapshot['cinder_object.version'] = snapshot['versioned_object.version']
+            snapshot['cinder_object.namespace'] = snapshot['versioned_object.namespace']
+            snapshot = objects.Snapshot().obj_from_primitive(snapshot)
+            snapshot['_context'] = context
+
         context = context.elevated()
         LOG.info(_LI("snapshot %s: creating"), snapshot.id)
 
@@ -690,8 +717,18 @@ class VolumeManager(manager.SchedulerDependentManager):
         return snapshot.id
 
     @locked_snapshot_operation
-    def delete_snapshot(self, context, snapshot):
+    def delete_snapshot(self, context, snapshot, unmanage_only=False):
         """Deletes and unexports snapshot."""
+
+        # Support Liberty snapshot call
+        if 'versioned_object.data' in snapshot:
+            snapshot['cinder_object.data'] = snapshot['versioned_object.data']
+            snapshot['cinder_object.name'] = snapshot['versioned_object.name']
+            snapshot['cinder_object.version'] = snapshot['versioned_object.version']
+            snapshot['cinder_object.namespace'] = snapshot['versioned_object.namespace']
+            snapshot = objects.Snapshot().obj_from_primitive(snapshot)
+            snapshot['_context'] = context
+
         context = context.elevated()
         project_id = snapshot.project_id
 

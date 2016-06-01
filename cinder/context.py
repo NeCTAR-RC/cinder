@@ -70,7 +70,10 @@ class RequestContext(context.RequestContext):
         if not timestamp:
             timestamp = timeutils.utcnow()
         if isinstance(timestamp, basestring):
-            timestamp = timeutils.parse_strtime(timestamp)
+            try:
+                timestamp = timeutils.parse_strtime(timestamp)
+            except:
+                timestamp = timeutils.parse_isotime(timestamp)
         self.timestamp = timestamp
         self.quota_class = quota_class
 
@@ -108,17 +111,20 @@ class RequestContext(context.RequestContext):
 
     def to_dict(self):
         default = super(RequestContext, self).to_dict()
-        extra = {'user_id': self.user_id,
-                 'project_id': self.project_id,
-                 'project_name': self.project_name,
-                 'domain': self.domain,
-                 'read_deleted': self.read_deleted,
-                 'roles': self.roles,
-                 'remote_address': self.remote_address,
-                 'timestamp': timeutils.strtime(self.timestamp),
-                 'quota_class': self.quota_class,
-                 'service_catalog': self.service_catalog,
-                 'request_id': self.request_id}
+        try:
+            extra = {'user_id': self.user_id,
+                     'project_id': self.project_id,
+                     'project_name': self.project_name,
+                     'domain': self.domain,
+                     'read_deleted': self.read_deleted,
+                     'roles': self.roles,
+                     'remote_address': self.remote_address,
+                     'timestamp': timeutils.strtime(self.timestamp),
+                     'quota_class': self.quota_class,
+                     'service_catalog': self.service_catalog,
+                     'request_id': self.request_id}
+        except:
+            extra = {}
         return dict(default.items() + extra.items())
 
     @classmethod

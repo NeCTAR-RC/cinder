@@ -962,7 +962,8 @@ class VolumeTestCase(BaseVolumeTestCase):
         volume_dst = tests_utils.create_volume(self.context,
                                                snapshot_id=snapshot_id,
                                                **self.volume_params)
-        self.volume.create_volume(self.context, volume_dst['id'], snapshot_id)
+        self.volume.create_volume(context=self.context, volume_id=volume_dst['id'],
+                                  snapshot_id=snapshot_id)
         self.assertEqual(volume_dst['id'],
                          db.volume_get(
                              context.get_admin_context(),
