@@ -1,3 +1,4 @@
 fix-test-setup-mysql8.patch
 py38skip.patch
 skip-etc-mtab-test.patch
+fix-manifest.patch
