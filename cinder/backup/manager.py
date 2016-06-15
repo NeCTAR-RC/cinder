@@ -240,8 +240,10 @@ class BackupManager(manager.SchedulerDependentManager):
                 LOG.info(_LI('Resuming delete on backup: %s.'), backup['id'])
                 self.delete_backup(ctxt, backup['id'])
 
-    def create_backup(self, context, backup_id):
+    def create_backup(self, context, backup_id=None, backup=None):
         """Create volume backups using configured backup service."""
+        if not backup_id:
+            backup_id = backup['versioned_object.data']['id']
         backup = self.db.backup_get(context, backup_id)
         volume_id = backup['volume_id']
         volume = self.db.volume_get(context, volume_id)
@@ -308,8 +310,10 @@ class BackupManager(manager.SchedulerDependentManager):
         LOG.info(_LI('Create backup finished. backup: %s.'), backup_id)
         self._notify_about_backup_usage(context, backup, "create.end")
 
-    def restore_backup(self, context, backup_id, volume_id):
+    def restore_backup(self, context, volume_id, backup_id=None, backup=None):
         """Restore volume backups from configured backup service."""
+        if not backup_id:
+            backup_id = backup['versioned_object.data']['id']
         LOG.info(_LI('Restore backup started, backup: %(backup_id)s '
                      'volume: %(volume_id)s.'),
                  {'backup_id': backup_id, 'volume_id': volume_id})
@@ -393,8 +397,10 @@ class BackupManager(manager.SchedulerDependentManager):
                  {'backup_id': backup_id, 'volume_id': volume_id})
         self._notify_about_backup_usage(context, backup, "restore.end")
 
-    def delete_backup(self, context, backup_id):
+    def delete_backup(self, context, backup_id=None, backup=None):
         """Delete volume backup from configured backup service."""
+        if not backup_id:
+            backup_id = backup['versioned_object.data']['id']
         try:
             # NOTE(flaper87): Verify the driver is enabled
             # before going forward. The exception will be caught
