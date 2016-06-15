@@ -1,2 +1,3 @@
 skip-taskflow-tests-py37.patch
 fix-test-setup-mysql8.patch
+fix-manifest.patch
