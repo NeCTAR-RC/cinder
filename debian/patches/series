@@ -1,3 +1,4 @@
 google-back-requirements.patch
 fix-long-casting.patch
 log-message-cleanup-for-volume-usage-audit.patch
+fix-manifest.patch
