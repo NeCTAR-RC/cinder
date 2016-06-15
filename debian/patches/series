@@ -1,1 +1,2 @@
 skip-taskflow-tests-py37.patch
+fix-manifest.patch
