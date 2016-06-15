@@ -245,8 +245,8 @@ class BackupTestCase(BaseBackupTest):
         self.assertRaises(exception.InvalidVolume,
                           self.backup_mgr.restore_backup,
                           self.ctxt,
-                          backup_id,
-                          vol_id)
+                          backup_id=backup_id,
+                          volume_id=vol_id)
         backup = db.backup_get(self.ctxt, backup_id)
         self.assertEqual(backup['status'], 'available')
 
@@ -261,8 +261,8 @@ class BackupTestCase(BaseBackupTest):
         self.assertRaises(exception.InvalidBackup,
                           self.backup_mgr.restore_backup,
                           self.ctxt,
-                          backup_id,
-                          vol_id)
+                          backup_id=backup_id,
+                          volume_id=vol_id)
         vol = db.volume_get(self.ctxt, vol_id)
         self.assertEqual(vol['status'], 'error')
         backup = db.backup_get(self.ctxt, backup_id)
@@ -280,8 +280,8 @@ class BackupTestCase(BaseBackupTest):
         self.assertRaises(FakeBackupException,
                           self.backup_mgr.restore_backup,
                           self.ctxt,
-                          backup_id,
-                          vol_id)
+                          backup_id=backup_id,
+                          volume_id=vol_id)
         vol = db.volume_get(self.ctxt, vol_id)
         self.assertEqual(vol['status'], 'error_restoring')
         backup = db.backup_get(self.ctxt, backup_id)
@@ -302,8 +302,8 @@ class BackupTestCase(BaseBackupTest):
         self.assertRaises(exception.InvalidBackup,
                           self.backup_mgr.restore_backup,
                           self.ctxt,
-                          backup_id,
-                          vol_id)
+                          backup_id=backup_id,
+                          volume_id=vol_id)
         vol = db.volume_get(self.ctxt, vol_id)
         self.assertEqual(vol['status'], 'error')
         backup = db.backup_get(self.ctxt, backup_id)
@@ -318,7 +318,7 @@ class BackupTestCase(BaseBackupTest):
         backup_id = self._create_backup_db_entry(status='restoring',
                                                  volume_id=vol_id)
 
-        self.backup_mgr.restore_backup(self.ctxt, backup_id, vol_id)
+        self.backup_mgr.restore_backup(self.ctxt, backup_id=backup_id, volume_id=vol_id)
         vol = db.volume_get(self.ctxt, vol_id)
         self.assertEqual(vol['status'], 'available')
         backup = db.backup_get(self.ctxt, backup_id)
@@ -335,7 +335,7 @@ class BackupTestCase(BaseBackupTest):
         backup_id = self._create_backup_db_entry(status='restoring',
                                                  volume_id=vol_id)
 
-        self.backup_mgr.restore_backup(self.ctxt, backup_id, vol_id)
+        self.backup_mgr.restore_backup(self.ctxt, backup_id=backup_id, volume_id=vol_id)
         self.assertEqual(2, notify.call_count)
 
     def test_delete_backup_with_bad_backup_status(self):
