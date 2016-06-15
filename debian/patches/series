@@ -1,2 +1,3 @@
 skip-victoria-failures.patch
 add-mock-psutil-in-quobyte-tests.patch
+fix-manifest.patch
