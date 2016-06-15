@@ -3,3 +3,4 @@ fix-i386.patch
 skip-google-backup-tests.patch
 fix-long-casting.patch
 skip-failing-tests.patch
+fix-manifest.patch
