@@ -274,7 +274,8 @@ class QuotaSetsControllerTest(QuotaSetsControllerTestBase):
         self.req.environ['cinder.context'].is_admin = False
         self.req.environ['cinder.context'].project_id = 'foo'
         self.req.environ['cinder.context'].user_id = 'foo_user'
-        self.assertRaises(webob.exc.HTTPForbidden, self.controller.update,
+        self.assertRaises(exception.PolicyNotAuthorized,
+                          self.controller.update,
                           self.req, 'foo', make_body(tenant_id=None))
 
     def test_update_without_quota_set_field(self):
@@ -364,7 +365,8 @@ class QuotaSetsControllerTest(QuotaSetsControllerTestBase):
 
     def test_delete_no_admin(self):
         self.req.environ['cinder.context'].is_admin = False
-        self.assertRaises(webob.exc.HTTPForbidden, self.controller.delete,
+        self.assertRaises(exception.PolicyNotAuthorized,
+                          self.controller.delete,
                           self.req, 'foo')
 
     def test_subproject_show_not_using_nested_quotas(self):
