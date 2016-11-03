@@ -1,0 +1,15 @@
+Description: Add i386 long support to str2size().
+Author: Corey Bryant <corey.bryant@canonical.com>
+Forwarded: yes
+
+--- a/cinder/volume/drivers/nexenta/utils.py
++++ b/cinder/volume/drivers/nexenta/utils.py
+@@ -39,7 +39,7 @@
+     if not s:
+         return 0
+ 
+-    if isinstance(s, int):
++    if isinstance(s, six.integer_types):
+         return s
+ 
+     match = re.match(r'^([\.\d]+)\s*([BbKkMmGgTtPpEeZzYy]?)', s)
