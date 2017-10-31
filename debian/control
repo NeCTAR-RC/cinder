@@ -173,8 +173,6 @@ Description: Cinder Python libraries
 Package: cinder-common
 Architecture: all
 Depends: adduser,
-         apache2 | httpd,
-         libapache2-mod-wsgi,
          python-cinder (= ${binary:Version}),
          ${misc:Depends},
          ${python:Depends}
@@ -194,7 +192,9 @@ Package: cinder-api
 Architecture: all
 Depends: cinder-common (= ${binary:Version}),
          ${misc:Depends},
-         ${python:Depends}
+         ${python:Depends},
+         apache2 | httpd,
+         libapache2-mod-wsgi
 Description: Cinder storage service - API server
  OpenStack is a reliable cloud infrastructure. Its mission is to produce
  the ubiquitous cloud computing platform that will meet the needs of public
