@@ -20,7 +20,6 @@ from oslo_utils import strutils
 from cinder.api import extensions
 from cinder.api.openstack import wsgi
 from cinder import db
-from cinder.db.sqlalchemy import api as sqlalchemy_api
 from cinder import exception
 from cinder.i18n import _
 from cinder import quota
@@ -160,9 +159,9 @@ class QuotaSetsController(wsgi.Controller):
         :param id: target project id that needs to be shown
         """
         context = req.environ['cinder.context']
-        authorize_show(context)
         params = req.params
         target_project_id = id
+        authorize_show(context, target={'project_id': target_project_id})
 
         if not hasattr(params, '__call__') and 'usage' in params:
             usage = utils.get_bool_param('usage', params)
@@ -180,12 +179,6 @@ class QuotaSetsController(wsgi.Controller):
                 is_admin_project=context.is_admin)
 
             self._authorize_show(context_project, target_project)
-
-        try:
-            sqlalchemy_api.authorize_project_context(context,
-                                                     target_project_id)
-        except exception.NotAuthorized:
-            raise webob.exc.HTTPForbidden()
 
         quotas = self._get_quotas(context, target_project_id, usage)
         return self._format_quota_set(target_project_id, quotas)
