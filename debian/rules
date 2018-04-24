@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+export OSLO_PACKAGE_VERSION=$(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
+
+DEBVERS ?= $(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
+VERSION ?= $(shell echo '$(DEBVERS)' | sed -e 's/^[[:digit:]]*://' -e 's/[-].*//' -e 's/~/./g')
+export PBR_VERSION=$(VERSION)
+
+include /usr/share/openstack-pkg-tools/pkgos.make
+
+%:
+	dh $@  --with python2,systemd,apache2
+
+get-orig-source:
+	uscan --verbose --rename --destdir=../build-area
+
+ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+override_dh_auto_test:
+	ostestr --blacklist_file $(CURDIR)/debian/test-blacklist.txt
+endif
+
+override_dh_install:
+	dh_install --fail-missing -Xbin/cinder-all -Xusr/bin/cinder-api
+
+override_dh_fixperms:
+	dh_fixperms -Xcinder_tgt.conf
+
+override_dh_clean:
+	# temporary workaround for d2to1 wonkyness
+	dh_clean -Xsetup.cfg
+	rm -f debian/*.init debian/*.service debian/*.upstart
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf .eggs .testrepository

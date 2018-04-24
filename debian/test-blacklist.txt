@@ -1,0 +1,2 @@
+# Unable to find /etc/mtab - https://bugs.launchpad.net/bugs/1675861
+^cinder.tests.unit.volume.drivers.test_quobyte.QuobyteDriverTestCase.test_validate_volume_no_mtab_entry
