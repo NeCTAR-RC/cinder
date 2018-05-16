@@ -39,6 +39,7 @@ class ViewBuilder(common.ViewBuilder):
             'pool': {
                 'name': pool.get('name'),
                 'capabilities': pool.get('capabilities'),
+                'availability_zone': pool.get('availability_zone'),
             }
         }
 
