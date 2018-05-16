@@ -806,6 +806,7 @@ class HostManagerTestCase(test.TestCase):
                         'vendor_name': None,
                         'storage_protocol': None,
                         'provisioned_capacity_gb': 312},
+                    'availability_zone': 'zone1',
                 },
                 {
                     'name': 'host2@back1#BBB',
@@ -819,6 +820,7 @@ class HostManagerTestCase(test.TestCase):
                         'vendor_name': None,
                         'storage_protocol': None,
                         'provisioned_capacity_gb': 156},
+                    'availability_zone': 'zone1',
                 },
                 {
                     'name': 'host2@back2#CCC',
@@ -832,6 +834,7 @@ class HostManagerTestCase(test.TestCase):
                         'vendor_name': None,
                         'storage_protocol': None,
                         'provisioned_capacity_gb': 9300},
+                    'availability_zone': 'zone2',
                 }
             ]
 
@@ -1021,6 +1024,7 @@ class HostManagerTestCase(test.TestCase):
                         'vendor_name': None,
                         'storage_protocol': None,
                         'provisioned_capacity_gb': 312},
+                    'availability_zone': 'zone1',
                 }
             ]
 
@@ -1115,6 +1119,7 @@ class HostManagerTestCase(test.TestCase):
                         'vendor_name': None,
                         'storage_protocol': None,
                         'multiattach': True},
+                    'availability_zone': 'zone1',
                 }
             ]
             expected_f = [
@@ -1130,6 +1135,7 @@ class HostManagerTestCase(test.TestCase):
                         'vendor_name': None,
                         'storage_protocol': None,
                         'multiattach': False},
+                    'availability_zone': 'zone1',
                 }
             ]
 
