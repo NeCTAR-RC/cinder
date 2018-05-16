@@ -34,14 +34,16 @@ def schedule_rpcapi_get_pools(self, context, filters=None):
                      total_capacity=1024, free_capacity=100,
                      volume_backend_name='pool1', reserved_percentage=0,
                      driver_version='1.0.0', storage_protocol='iSCSI',
-                     QoS_support='False', updated=None))
+                     QoS_support='False', updated=None),
+                 availability_zone='zone1')
     all_pools.append(pool1)
     pool2 = dict(name='pool2',
                  capabilities=dict(
                      total_capacity=512, free_capacity=200,
                      volume_backend_name='pool2', reserved_percentage=0,
                      driver_version='1.0.1', storage_protocol='iSER',
-                     QoS_support='True', updated=None))
+                     QoS_support='True', updated=None),
+                 availability_zone='zone2')
     all_pools.append(pool2)
 
     return all_pools
@@ -147,7 +149,8 @@ class SchedulerStatsAPITest(test.TestCase):
                         'reserved_percentage': 0,
                         'driver_version': '1.0.0',
                         'storage_protocol': 'iSCSI',
-                        'QoS_support': 'False', }
+                        'QoS_support': 'False', },
+                    'availability_zone': 'zone1'
                 },
                 {
                     'name': 'pool2',
@@ -159,7 +162,8 @@ class SchedulerStatsAPITest(test.TestCase):
                         'reserved_percentage': 0,
                         'driver_version': '1.0.1',
                         'storage_protocol': 'iSER',
-                        'QoS_support': 'True', }
+                        'QoS_support': 'True', },
+                    'availability_zone': 'zone2'
                 }
             ]
         }
