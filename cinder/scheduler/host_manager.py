@@ -737,7 +737,8 @@ class HostManager(object):
                                                   all_pools))
 
         # encapsulate pools in format:{name: XXX, capabilities: XXX}
-        return [dict(name=key, capabilities=value.capabilities)
+        return [dict(name=key, capabilities=value.capabilities,
+                     availability_zone=value.service['availability_zone'])
                 for key, value in all_pools.items()]
 
     def get_usage_and_notify(self, capa_new, updated_pools, host, timestamp):
