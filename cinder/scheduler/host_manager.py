@@ -639,7 +639,9 @@ class HostManager(object):
                 pool = state.pools[key]
                 # use backend_key.pool_name to make sure key is unique
                 pool_key = vol_utils.append_host(backend_key, pool.pool_name)
-                new_pool = dict(name=pool_key)
+                new_pool = dict(
+                    name=pool_key,
+                    availability_zone=state.service['availability_zone'])
                 new_pool.update(dict(capabilities=pool.capabilities))
                 all_pools.append(new_pool)
 
