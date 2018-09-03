@@ -1,0 +1,9 @@
+debian/cinder.conf etc/cinder
+debian/cinder_sudoers etc/sudoers.d
+debian/logging.conf etc/cinder
+usr/bin/cinder-manage
+usr/bin/cinder-rootwrap
+usr/bin/cinder-rtstool
+usr/bin/cinder-wsgi
+usr/etc/cinder/api-paste.ini etc/cinder
+usr/etc/cinder/rootwrap.conf etc/cinder
