@@ -113,9 +113,11 @@ class DriverFilter(filters.BaseBackendFilter):
             filter_function = six.text_type(backend_caps['filter_function'])
 
         qos_specs = filter_properties.get('qos_specs', {})
-
         volume_type = filter_properties.get('volume_type', {})
-        extra_specs = volume_type.get('extra_specs', {})
+        if volume_type:
+            extra_specs = volume_type.get('extra_specs', {})
+        else:
+            extra_specs = {}
 
         request_spec = filter_properties.get('request_spec', {})
         volume_stats = request_spec.get('volume_properties', {})
