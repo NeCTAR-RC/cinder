@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 QUOTAS = quota.QUOTAS
 GROUP_QUOTAS = quota.GROUP_QUOTAS
-NON_QUOTA_KEYS = ['tenant_id', 'id']
+NON_QUOTA_KEYS = ['tenant_id', 'id', 'force']
 
 
 class QuotaSetsController(wsgi.Controller):
@@ -44,9 +44,9 @@ class QuotaSetsController(wsgi.Controller):
 
         return dict(quota_set=quota_set)
 
-    def _validate_existing_resource(self, key, value, quota_values):
+    def _validate_existing_resource(self, key, value, quota_values, force=False):
         # -1 limit will always be greater than the existing value
-        if key == 'per_volume_gigabytes' or value == -1:
+        if key == 'per_volume_gigabytes' or value == -1 or force:
             return
         v = quota_values.get(key, {})
         used = (v.get('in_use', 0) + v.get('reserved', 0))
@@ -225,6 +225,8 @@ class QuotaSetsController(wsgi.Controller):
             msg = _("Bad key(s) in quota set: %s") % ",".join(bad_keys)
             raise webob.exc.HTTPBadRequest(explanation=msg)
 
+        force_update = strutils.bool_from_string(body['quota_set'].get('force', 'False'))
+
         # Saving off this value since we need to use it multiple times
         use_nested_quotas = QUOTAS.using_nested_quotas()
         if use_nested_quotas:
@@ -265,7 +267,7 @@ class QuotaSetsController(wsgi.Controller):
                 body['quota_set'][key], key, min_value=-1,
                 max_value=db.MAX_INT)
 
-            self._validate_existing_resource(key, value, quota_values)
+            self._validate_existing_resource(key, value, quota_values, force_update)
 
             if use_nested_quotas:
                 try:
