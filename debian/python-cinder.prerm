@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "remove" ] ; then
+	update-alternatives --remove cinder-backup /usr/bin/python2-cinder-backup
+	update-alternatives --remove cinder-manage /usr/bin/python2-cinder-manage
+	update-alternatives --remove cinder-rootwrap /usr/bin/python2-cinder-rootwrap
+	update-alternatives --remove cinder-rtstool /usr/bin/python2-cinder-rtstool
+	update-alternatives --remove cinder-scheduler /usr/bin/python2-cinder-scheduler
+	update-alternatives --remove cinder-volume /usr/bin/python2-cinder-volume
+	update-alternatives --remove cinder-volume-usage-audit /usr/bin/python2-cinder-volume-usage-audit
+	update-alternatives --remove cinder-wsgi /usr/bin/python2-cinder-wsgi
+fi
+
+#DEBHELPER#
+
+exit 0

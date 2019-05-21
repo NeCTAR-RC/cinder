@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "configure" ] ; then
+	update-alternatives --install /usr/bin/cinder-backup cinder-backup /usr/bin/python3-cinder-backup 200
+	update-alternatives --install /usr/bin/cinder-manage cinder-manage /usr/bin/python3-cinder-manage 200
+	update-alternatives --install /usr/bin/cinder-rootwrap cinder-rootwrap /usr/bin/python3-cinder-rootwrap 200
+	update-alternatives --install /usr/bin/cinder-rtstool cinder-rtstool /usr/bin/python3-cinder-rtstool 200
+	update-alternatives --install /usr/bin/cinder-scheduler cinder-scheduler /usr/bin/python3-cinder-scheduler 200
+	update-alternatives --install /usr/bin/cinder-volume cinder-volume /usr/bin/python3-cinder-volume 200
+	update-alternatives --install /usr/bin/cinder-volume-usage-audit cinder-volume-usage-audit /usr/bin/python3-cinder-volume-usage-audit 200
+	update-alternatives --install /usr/bin/cinder-wsgi cinder-wsgi /usr/bin/python3-cinder-wsgi 200
+fi
+
+#DEBHELPER#
+
+exit 0

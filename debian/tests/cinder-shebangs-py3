@@ -1,0 +1,19 @@
+#!/bin/bash
+#---------------------
+# Testing /usr/bin/cinder-* shebangs
+#---------------------
+set -e
+
+BINARIES=('cinder-backup' 'cinder-manage' 'cinder-rootwrap' 'cinder-rtstool' \
+          'cinder-scheduler' 'cinder-volume' 'cinder-volume-usage-audit' \
+          'cinder-wsgi')
+
+ret=0
+
+for binary in "${BINARIES[@]}"; do
+    if ! `dirname $0`/test-shebang.py $binary python3.6; then
+        ret=1
+    fi
+done
+
+exit $ret

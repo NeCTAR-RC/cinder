@@ -1,0 +1,51 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+export OSLO_PACKAGE_VERSION=$(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
+
+DEBVERS ?= $(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
+VERSION ?= $(shell echo '$(DEBVERS)' | sed -e 's/^[[:digit:]]*://' -e 's/[-].*//' -e 's/~/./g')
+export PBR_VERSION=$(VERSION)
+
+include /usr/share/openstack-pkg-tools/pkgos.make
+
+%:
+	dh $@  --with python2,python3,systemd,apache2
+
+ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+override_dh_auto_test:
+	# NOTE(coreycb) Skip Py3.7 tests until they run successfully upstream:
+	# https://bugs.launchpad.net/bugs/1780823
+	# pkgos-dh_auto_test
+	echo "===> Running tests"
+	set -ex ; for i in 2.7 3.6 ; do \
+		PYMAJOR=`echo $$i | cut -d'.' -f1` ; \
+		echo "===> Testing with python$$i (python$$PYMAJOR)" ; \
+		rm -rf .stestr ; \
+		TEMP_REZ=`mktemp -t` ; \
+		PYTHONPATH=$(CURDIR) PYTHON=python$$i python$$PYMAJOR-stestr run --subunit | tee $$TEMP_REZ | subunit2pyunit ; \
+		cat $$TEMP_REZ | subunit-filter -s --no-passthrough | subunit-stats ; \
+		rm -f $$TEMP_REZ ; \
+		rm -rf .stestr ; \
+	done
+endif
+
+override_dh_auto_install:
+	pkgos-dh_auto_install
+	rm -rf $(CURDIR)/debian/python*-cinder/usr/etc
+
+override_dh_install:
+	dh_install --fail-missing -Xbin/cinder-all -Xusr/bin/cinder-api
+
+override_dh_fixperms:
+	dh_fixperms -Xcinder_tgt.conf
+
+override_dh_clean:
+	# temporary workaround for d2to1 wonkyness
+	dh_clean -Xsetup.cfg
+	rm -f debian/*.init debian/*.service debian/*.upstart
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf .eggs .testrepository

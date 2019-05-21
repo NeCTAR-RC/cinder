@@ -1,0 +1,121 @@
+From f3d6ae88add6e06107fc3ece30d8535693f739a2 Mon Sep 17 00:00:00 2001
+From: Corey Bryant <corey.bryant@canonical.com>
+Date: Mon, 22 Oct 2018 14:45:33 -0400
+Subject: [PATCH] PY3: Ensure rados.Object.read/write use byte data
+
+rados.Object.write(string_to_write) [1] and rados.Ioctx.write(data) [2]
+expect to write byte data for the above named arguments.
+rados.Object.read() returns that data.
+
+Ensure that the json_meta argument passed to rados.Object.write() in
+VolumeMetadataBackup.set() is encoded as a UTF-8 bytes object and decoded
+after rados.Object.read().
+
+Also update the corresponding unit tests to ensure that metadata
+dictionaries are JSON serialized, encoded, and decoded similar to
+how the actual code behaves. [3]
+
+[1] https://github.com/ceph/ceph/blob/v13.2.1/src/pybind/rados/rados.pyx#L3984
+[2] https://github.com/ceph/ceph/blob/v13.2.1/src/pybind/rados/rados.pyx#L2641
+[3] https://bugs.launchpad.net/cinder/+bug/1798917/comments/4
+
+Change-Id: Idb225b5c84be3beac0c272ed4b8d69ebb04c5858
+Closes-Bug: #1798917
+---
+ cinder/backup/drivers/ceph.py                 |  4 ++--
+ .../unit/backup/drivers/test_backup_ceph.py   | 19 +++++++++++--------
+ 2 files changed, 13 insertions(+), 10 deletions(-)
+
+diff --git a/cinder/backup/drivers/ceph.py b/cinder/backup/drivers/ceph.py
+index 0e8b27a75..f00d27abf 100644
+--- a/cinder/backup/drivers/ceph.py
++++ b/cinder/backup/drivers/ceph.py
+@@ -136,7 +136,7 @@ class VolumeMetadataBackup(object):
+             msg = _("Metadata backup object '%s' already exists") % self.name
+             raise exception.VolumeMetadataBackupExists(msg)
+ 
+-        meta_obj.write(json_meta)
++        meta_obj.write(json_meta.encode('utf-8'))
+ 
+     def get(self):
+         """Get metadata backup object.
+@@ -149,7 +149,7 @@ class VolumeMetadataBackup(object):
+             LOG.debug("Metadata backup object %s does not exist", self.name)
+             return None
+ 
+-        return meta_obj.read()
++        return meta_obj.read().decode('utf-8')
+ 
+     def remove_if_exists(self):
+         meta_obj = eventlet.tpool.Proxy(rados.Object(self._client.ioctx,
+diff --git a/cinder/tests/unit/backup/drivers/test_backup_ceph.py b/cinder/tests/unit/backup/drivers/test_backup_ceph.py
+index 7d56287ab..c5b163b86 100644
+--- a/cinder/tests/unit/backup/drivers/test_backup_ceph.py
++++ b/cinder/tests/unit/backup/drivers/test_backup_ceph.py
+@@ -1271,7 +1271,7 @@ class BackupCephTestCase(test.TestCase):
+             glance_tag = driver.BackupMetadataAPI.TYPE_TAG_VOL_GLANCE_META
+             return jsonutils.dumps({base_tag: {'image_name': 'image.base'},
+                                     glance_tag: {'image_name': 'image.glance'},
+-                                    'version': version})
++                                    'version': version}).encode('utf-8')
+ 
+         self.mock_rados.Object.return_value.read.side_effect = mock_read
+ 
+@@ -1347,7 +1347,7 @@ class BackupCephTestCase(test.TestCase):
+             glance_tag = driver.BackupMetadataAPI.TYPE_TAG_VOL_GLANCE_META
+             return jsonutils.dumps({base_tag: {'image_name': 'image.base'},
+                                     glance_tag: {'image_name': 'image.glance'},
+-                                    'version': 3})
++                                    'version': 3}).encode('utf-8')
+ 
+         self.mock_rados.Object.return_value.read.side_effect = mock_read
+         with mock.patch.object(ceph.VolumeMetadataBackup, '_exists') as \
+@@ -1457,12 +1457,14 @@ class VolumeMetadataBackupTestCase(test.TestCase):
+ 
+         self.mb.get = mock.Mock()
+         self.mb.get.side_effect = mock_read
++        serialized_meta_1 = jsonutils.dumps({'foo': 'bar'})
++        serialized_meta_2 = jsonutils.dumps({'doo': 'dah'})
+ 
+         with mock.patch.object(ceph.VolumeMetadataBackup, 'set') as mock_write:
+             mock_write.side_effect = _mock_write
+ 
+-            self.mb.set({'foo': 'bar'})
+-            self.assertEqual({'foo': 'bar'}, self.mb.get())
++            self.mb.set(serialized_meta_1)
++            self.assertEqual(serialized_meta_1, self.mb.get())
+             self.assertTrue(self.mb.get.called)
+ 
+             self.mb._exists = mock.Mock()
+@@ -1470,15 +1472,15 @@ class VolumeMetadataBackupTestCase(test.TestCase):
+ 
+         # use the unmocked set() method.
+         self.assertRaises(exception.VolumeMetadataBackupExists,
+-                          self.mb.set, {'doo': 'dah'})
++                          self.mb.set, serialized_meta_2)
+ 
+         # check the meta obj state has not changed.
+-        self.assertEqual({'foo': 'bar'}, self.mb.get())
++        self.assertEqual(serialized_meta_1, self.mb.get())
+ 
+         self.assertEqual(['write', 'read', 'read'], called)
+ 
+         self.mb._exists.return_value = False
+-        self.mb.set({'doo': 'dah'})
++        self.mb.set(serialized_meta_2)
+         self.assertNotEqual(thread_dict['thread'],
+                             threading.current_thread)
+ 
+@@ -1486,7 +1488,8 @@ class VolumeMetadataBackupTestCase(test.TestCase):
+     def test_get(self):
+         self.mock_rados.Object.return_value.stat.side_effect = (
+             self.mock_rados.ObjectNotFound)
+-        self.mock_rados.Object.return_value.read.return_value = 'meta'
++        self.mock_rados.Object.return_value.read.return_value = (
++            'meta'.encode('utf-8'))
+         self.assertIsNone(self.mb.get())
+         self.mock_rados.Object.return_value.stat.side_effect = None
+         self.assertEqual('meta', self.mb.get())
+-- 
+2.19.1
+

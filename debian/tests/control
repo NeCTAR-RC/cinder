@@ -1,0 +1,8 @@
+Tests: cinder-daemons cinder-volume cinder-shebangs-py3
+Depends: python3-cinder, libapache2-mod-wsgi-py3,
+ cinder-api, cinder-scheduler, lvm2
+Restrictions: needs-root
+
+Tests: cinder-daemons cinder-volume cinder-shebangs-py2
+Depends: cinder-api, cinder-scheduler, lvm2
+Restrictions: needs-root
