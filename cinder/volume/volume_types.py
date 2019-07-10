@@ -119,7 +119,7 @@ def get_all_types(context, inactive=0, filters=None, marker=None,
                 if vt['name'] in azs:
                     vol_types.pop(vol_types.index(vt))
         else:
-            for vt in vol_types.keys():
+            for vt in list(vol_types):
                 if vt in azs:
                     vol_types.pop(vt)
 
