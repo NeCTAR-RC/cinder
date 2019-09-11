@@ -245,6 +245,8 @@ class API(base.Base):
         if CONF.ensure_az and not availability_zone:
             if snapshot:
                 availability_zone = snapshot['volume']['availability_zone']
+            elif source_volume:
+                availability_zone = source_volume['availability_zone']
             else:
                 msg = _("availability_zone must be provided when creating "
                         "a volume.")
