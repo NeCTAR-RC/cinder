@@ -67,8 +67,9 @@ class API(base.Base):
 
         super(API, self).__init__(db_driver)
 
-    def _extract_availability_zone(self, availability_zone):
-        raw_zones = self.volume_api.list_availability_zones(enable_cache=True)
+    def _extract_availability_zone(self, context, availability_zone):
+        raw_zones = self.volume_api.list_availability_zones(
+            context, enable_cache=True)
         availability_zones = set([az['name'] for az in raw_zones])
         if CONF.storage_availability_zone:
             availability_zones.add(CONF.storage_availability_zone)
@@ -120,7 +121,8 @@ class API(base.Base):
                 except exception.GroupTypeNotFoundByName:
                     raise exception.GroupTypeNotFound(group_type_id=group_type)
 
-        availability_zone = self._extract_availability_zone(availability_zone)
+        availability_zone = self._extract_availability_zone(context,
+                                                            availability_zone)
         kwargs = {'user_id': context.user_id,
                   'project_id': context.project_id,
                   'availability_zone': availability_zone,
