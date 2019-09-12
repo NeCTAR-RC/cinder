@@ -30,7 +30,8 @@ class Controller(wsgi.Controller):
 
     def index(self, req):
         """Describe all known availability zones."""
-        azs = self.volume_api.list_availability_zones()
+        context = req.environ['cinder.context']
+        azs = self.volume_api.list_availability_zones(context)
         return self._view_builder.list(req, azs)
 
 

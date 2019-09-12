@@ -27,7 +27,7 @@ created_time = datetime.datetime(2012, 11, 14, 1, 20, 41, 95099)
 current_time = timeutils.utcnow()
 
 
-def list_availability_zones(self):
+def list_availability_zones(self, context):
     return (
         {'name': 'ping', 'available': True},
         {'name': 'pong', 'available': False},
