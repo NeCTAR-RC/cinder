@@ -112,7 +112,7 @@ def get_all_types(context, inactive=0, filters=None, marker=None,
 
     if CONF.az_as_volume_type:
         from cinder.volume import api as volume_api
-        azs = volume_api.API().list_availability_zones()
+        azs = volume_api.API().list_availability_zones(context)
         azs = [x['name'].split('-')[0] for x in azs]
         if list_result:
             for vt in vol_types:
