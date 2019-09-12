@@ -32,6 +32,7 @@ from cinder.api import common
 from cinder.common import constants
 from cinder import compute
 from cinder import context
+from cinder import context as cinder_context
 from cinder import coordination
 from cinder import db
 from cinder.db import base
@@ -118,7 +119,8 @@ class API(base.Base):
         self.message = message_api.API()
         super().__init__()
 
-    def list_availability_zones(self, enable_cache=False, refresh_cache=False):
+    def list_availability_zones(self, context, enable_cache=False,
+                                refresh_cache=False):
         """Describe the known availability zones
 
         :param enable_cache: Enable az cache
@@ -136,10 +138,11 @@ class API(base.Base):
                     refresh_cache = True
         if refresh_cache or not enable_cache:
             topic = constants.VOLUME_TOPIC
-            ctxt = context.get_admin_context()
+            ctxt = cinder_context.get_admin_context()
             services = objects.ServiceList.get_all_by_topic(ctxt, topic)
             az_data = [(s.availability_zone, s.disabled)
                        for s in services]
+
             disabled_map = {}
             for (az_name, disabled) in az_data:
                 tracked_disabled = disabled_map.get(az_name, True)
@@ -155,6 +158,19 @@ class API(base.Base):
                               seconds=CONF.az_cache_duration))
         else:
             azs = self.availability_zones
+
+        # Nectarism: Filter the list of AZs based on whether or not the user
+        # has quota. This only works with the assumption that the
+        # volume type/availability zone naming is set as we expect.
+        if not context.is_admin:
+            quotas = QUOTAS.get_project_quotas(context, context.project_id)
+            no_quota_zones = [q.split('_')[-1] for q, v in quotas.items()
+                              if q.startswith('volumes_') and v['limit'] == 0]
+            for az in azs:
+                az_base_name = az['name'].split('-')[0]
+                if az_base_name in no_quota_zones:
+                    az['available'] = False
+
         LOG.info("Availability Zones retrieved successfully.")
         return tuple(azs)
 
@@ -342,7 +358,7 @@ class API(base.Base):
         # Determine the valid availability zones that the volume could be
         # created in (a task in the flow will/can use this information to
         # ensure that the availability zone requested is valid).
-        raw_zones = self.list_availability_zones(enable_cache=True)
+        raw_zones = self.list_availability_zones(context, enable_cache=True)
         availability_zones = set([az['name'] for az in raw_zones])
         if CONF.storage_availability_zone:
             availability_zones.add(CONF.storage_availability_zone)
@@ -400,14 +416,16 @@ class API(base.Base):
                 # NOTE(tommylikehu): If the target az is not hit,
                 # refresh the az cache immediately.
                 if flow_engine.storage.fetch('refresh_az'):
-                    self.list_availability_zones(enable_cache=True,
+                    self.list_availability_zones(context,
+                                                 enable_cache=True,
                                                  refresh_cache=True)
                 LOG.info("Create volume request issued successfully.",
                          resource=vref)
                 return vref
             except exception.InvalidAvailabilityZone:
                 with excutils.save_and_reraise_exception():
-                    self.list_availability_zones(enable_cache=True,
+                    self.list_availability_zones(context,
+                                                 enable_cache=True,
                                                  refresh_cache=True)
 
     def revert_to_snapshot(self, context, volume, snapshot):
