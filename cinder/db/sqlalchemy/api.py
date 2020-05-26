@@ -1255,8 +1255,6 @@ def quota_reserve(context, resources, quotas, deltas, expire,
         while work:
             resource = work.pop()
 
-            # Do we need to refresh the usage?
-            refresh = False
             if resource not in usages:
                 usages[resource] = _quota_usage_create(elevated,
                                                        project_id,
@@ -1264,59 +1262,44 @@ def quota_reserve(context, resources, quotas, deltas, expire,
                                                        0, 0,
                                                        until_refresh or None,
                                                        session=session)
-                refresh = True
-            elif usages[resource].in_use < 0:
-                # Negative in_use count indicates a desync, so try to
-                # heal from that...
-                refresh = True
-            elif usages[resource].until_refresh is not None:
-                usages[resource].until_refresh -= 1
-                if usages[resource].until_refresh <= 0:
-                    refresh = True
-            elif max_age and usages[resource].updated_at is not None and (
-                (timeutils.utcnow() -
-                    usages[resource].updated_at).total_seconds() >= max_age):
-                refresh = True
 
-            # OK, refresh the usage
-            if refresh:
-                # Grab the sync routine
-                sync = QUOTA_SYNC_FUNCTIONS[resources[resource].sync]
-                volume_type_id = getattr(resources[resource],
-                                         'volume_type_id', None)
-                volume_type_name = getattr(resources[resource],
-                                           'volume_type_name', None)
-                updates = sync(elevated, project_id,
-                               volume_type_id=volume_type_id,
-                               volume_type_name=volume_type_name,
-                               session=session)
-                for res, in_use in updates.items():
-                    # Make sure we have a destination for the usage!
-                    if res not in usages:
-                        usages[res] = _quota_usage_create(
-                            elevated,
-                            project_id,
-                            res,
-                            0, 0,
-                            until_refresh or None,
-                            session=session
-                        )
+            # Grab the sync routine
+            sync = QUOTA_SYNC_FUNCTIONS[resources[resource].sync]
+            volume_type_id = getattr(resources[resource],
+                                     'volume_type_id', None)
+            volume_type_name = getattr(resources[resource],
+                                       'volume_type_name', None)
+            updates = sync(elevated, project_id,
+                           volume_type_id=volume_type_id,
+                           volume_type_name=volume_type_name,
+                           session=session)
+            for res, in_use in updates.items():
+                # Make sure we have a destination for the usage!
+                if res not in usages:
+                    usages[res] = _quota_usage_create(
+                        elevated,
+                        project_id,
+                        res,
+                        0, 0,
+                        until_refresh or None,
+                        session=session
+                    )
 
-                    # Update the usage
-                    usages[res].in_use = in_use
-                    usages[res].until_refresh = until_refresh or None
+                # Update the usage
+                usages[res].in_use = in_use
+                usages[res].until_refresh = until_refresh or None
 
-                    # Because more than one resource may be refreshed
-                    # by the call to the sync routine, and we don't
-                    # want to double-sync, we make sure all refreshed
-                    # resources are dropped from the work set.
-                    work.discard(res)
+                # Because more than one resource may be refreshed
+                # by the call to the sync routine, and we don't
+                # want to double-sync, we make sure all refreshed
+                # resources are dropped from the work set.
+                work.discard(res)
 
-                    # NOTE(Vek): We make the assumption that the sync
-                    #            routine actually refreshes the
-                    #            resources that it is the sync routine
-                    #            for.  We don't check, because this is
-                    #            a best-effort mechanism.
+                # NOTE(Vek): We make the assumption that the sync
+                #            routine actually refreshes the
+                #            resources that it is the sync routine
+                #            for.  We don't check, because this is
+                #            a best-effort mechanism.
 
         # Check for deltas that would go negative
         if is_allocated_reserve:
