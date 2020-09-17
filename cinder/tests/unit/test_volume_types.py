@@ -224,6 +224,17 @@ class VolumeTypeTestCase(test.TestCase):
         vol_types = volume_types.get_all_types(self.ctxt)
         self.assertEqual(total_volume_types, len(vol_types))
 
+    def test_get_all_volume_types_hidden_enabled(self):
+        """Ensures that all volume types can be retrieved, excluding hidden."""
+        with db_api.main_context_manager.writer.using(self.ctxt):
+            volume_types.create(self.ctxt, 'hidden-type',
+                                extra_specs={'nectar:hidden': 'True'})
+            total_volume_types = self.ctxt.session.query(
+                models.VolumeType
+            ).count()
+        vol_types = volume_types.get_all_types(self.ctxt)
+        self.assertEqual(total_volume_types - 1, len(vol_types))
+
     def test_get_default_volume_type(self):
         """Ensures default volume type can be retrieved."""
         default_vol_type = volume_types.get_default_volume_type()
