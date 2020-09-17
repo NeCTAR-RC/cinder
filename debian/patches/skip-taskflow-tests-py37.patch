@@ -1,0 +1,33 @@
+Description: Skip tests that are failing for Python 3.7 due to
+  taskflow StopIteration issue.
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1780823
+Author: Corey Bryant <corey.bryant@canonical.com>
+Forwarded: No
+
+--- a/cinder/tests/unit/volume/drivers/dell_emc/vnx/test_adapter.py
++++ b/cinder/tests/unit/volume/drivers/dell_emc/vnx/test_adapter.py
+@@ -15,6 +15,8 @@
+ import mock
+ import os
+ import re
++import sys
++import testtools
+ 
+ from oslo_config import cfg
+ 
+@@ -197,6 +199,7 @@
+         common.do_create_cg_from_cgsnap.assert_called_once_with(
+             group.id, group.host, [vol_new], group_snapshot.id, snaps)
+ 
++    @testtools.skipIf(sys.version_info >= (3, 7), "Skipping test for Python 3.7")
+     @res_mock.mock_driver_input
+     @res_mock.patch_common_adapter
+     def test_do_create_cg_from_cgsnap(
+@@ -259,6 +262,7 @@
+         common.do_clone_cg.assert_called_once_with(
+             group.id, group.host, [vol], src_group.id, [src_vol])
+ 
++    @testtools.skipIf(sys.version_info >= (3, 7), "Skipping test for Python 3.7")
+     @res_mock.mock_driver_input
+     @res_mock.patch_common_adapter
+     def test_do_clone_cg(self, vnx_common, _, cinder_input):
