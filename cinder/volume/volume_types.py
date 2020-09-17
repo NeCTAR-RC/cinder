@@ -109,6 +109,16 @@ def get_all_types(context, inactive=0, filters=None, marker=None,
                                        sort_keys=sort_keys,
                                        sort_dirs=sort_dirs, offset=offset,
                                        list_result=list_result)
+
+    if list_result:
+        vol_types = [vt for vt in vol_types
+                     if 'extra_specs' not in vt or
+                     vt['extra_specs'].get('nectar:hidden', False) != 'True']
+    else:
+        vol_types = {name: vt for name, vt in vol_types.items()
+                     if 'extra_specs' not in vt or
+                     vt['extra_specs'].get('nectar:hidden', False) != 'True'}
+
     return vol_types
 
 
