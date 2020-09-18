@@ -257,6 +257,34 @@ class API(base.Base):
                         "a volume.")
                 raise exception.InvalidInput(reason=msg)
 
+        if CONF.az_as_volume_type and not volume_type:
+            # Copied from task flow, check earlier to catch error before az_as_volume_type
+            type_azs = volume_utils.extract_availability_zones_from_volume_type(
+                volume_type)
+            type_az_configured = type_azs is not None
+            if type_az_configured:
+                safe_azs = list(
+                    set(type_azs).intersection(availability_zone))
+                if not safe_azs:
+                    raise exception.InvalidTypeAvailabilityZones(az=type_azs)
+
+            try:
+                az_start = availability_zone.split('-')[0]
+                if not volume_type or volume_type.id == '00000000-0000-0000-0000-000000000000':
+                    # Default to AZ types
+                    az_start = availability_zone.split('-')[0]
+                    volume_type = objects.VolumeType.get_by_name_or_id(context,
+                                                                       az_start)
+                else:
+                    # Try to find a az specific type for the name
+                    full_name = "%s-%s" % (az_start, volume_type.name)
+                    volume_type = objects.VolumeType.get_by_name_or_id(context,
+                                                                       full_name)
+            except exception.VolumeTypeNotFoundByName:
+                msg = "Volume type is not available"
+                LOG.exception(msg)
+                raise exception.InvalidInput(reason=msg)
+
         if consistencygroup and (not cgsnapshot and not source_cg):
             if not volume_type:
                 msg = _("volume_type must be provided when creating "
