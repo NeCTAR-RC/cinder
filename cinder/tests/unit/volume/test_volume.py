@@ -3342,3 +3342,82 @@ class VolumeTestCaseLocks(base.BaseVolumeTestCase):
         self.assertRaises(exception.InvalidInput,
                           volume_api.create, self.context, 1, 'name',
                           'description')
+
+    def test_create_volume_with_az_volume_type(self):
+        self.override_config('az_as_volume_type', True)
+        elevated = context.get_admin_context()
+        az = CONF.storage_availability_zone
+        db.volume_type_create(elevated,
+                              {'id': '61298380-0c12-11e3-bfd6-4b48424183be',
+                               'name': az})
+
+        volume_api = cinder.volume.api.API()
+        db_vol_type = db.volume_type_get_by_name(elevated, az)
+
+        volume = volume_api.create(self.context,
+                                   1,
+                                   'name',
+                                   'description',
+                                   availability_zone=az)
+        self.assertEqual(db_vol_type.get('id'), volume['volume_type_id'])
+
+    def test_create_volume_with_az_volume_type_zeros(self):
+        self.override_config('az_as_volume_type', True)
+        elevated = context.get_admin_context()
+        az = CONF.storage_availability_zone
+        db.volume_type_create(elevated,
+                              {'id': '00000000-0000-0000-0000-000000000000',
+                               'name': 'standard'})
+        db.volume_type_create(elevated,
+                              {'id': '61298380-0c12-11e3-bfd6-4b48424183be',
+                               'name': az})
+
+        volume_api = cinder.volume.api.API()
+        vt = objects.VolumeType.get_by_name_or_id(elevated, "standard")
+        db_vol_type = db.volume_type_get_by_name(elevated, az)
+
+        volume = volume_api.create(self.context,
+                                   1,
+                                   'name',
+                                   'description',
+                                   availability_zone=az,
+                                   volume_type=vt)
+        self.assertEqual(db_vol_type.get('id'), volume['volume_type_id'])
+
+    def test_create_volume_with_az_volume_type_fail_no_type(self):
+        self.override_config('az_as_volume_type', True)
+        az = CONF.storage_availability_zone
+
+        volume_api = cinder.volume.api.API()
+        self.assertRaises(exception.InvalidInput,
+                          volume_api.create,
+                          self.context,
+                          1,
+                          'name',
+                          'description',
+                          availability_zone=az)
+
+    def test_create_volume_with_az_volume_type_with_type(self):
+        self.override_config('az_as_volume_type', True)
+        elevated = context.get_admin_context()
+        az = CONF.storage_availability_zone
+        base_vt = 'special'
+        vt_name = '%s-%s' % (base_vt, az)
+        db.volume_type_create(elevated,
+                              {'id': '61298380-0c12-11e3-bfd6-4b48424183be',
+                               'name': base_vt})
+        db.volume_type_create(elevated,
+                              {'id': '61298380-0c12-11e3-bfd6-4b48424183b2',
+                               'name': vt_name})
+
+        volume_api = cinder.volume.api.API()
+        vt = objects.VolumeType.get_by_name_or_id(elevated, base_vt)
+        db_vol_type = db.volume_type_get_by_name(elevated, vt_name)
+
+        volume = volume_api.create(self.context,
+                                   1,
+                                   'name',
+                                   'description',
+                                   availability_zone=az,
+                                   volume_type=vt)
+        self.assertEqual(db_vol_type.get('id'), volume['volume_type_id'])
