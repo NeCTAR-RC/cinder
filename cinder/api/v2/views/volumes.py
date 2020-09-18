@@ -138,6 +138,9 @@ class ViewBuilder(common.ViewBuilder):
     def _get_volume_type(self, volume):
         """Retrieve the type the volume object."""
         if volume['volume_type_id'] and volume.get('volume_type'):
+            if volume['volume_type']['extra_specs'].get('nectar:parent'):
+                return volume['volume_type']['extra_specs'].get(
+                    'nectar:parent')
             return volume['volume_type']['name']
         else:
             return volume['volume_type_id']
