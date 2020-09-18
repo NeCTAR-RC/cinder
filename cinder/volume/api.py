@@ -210,6 +210,34 @@ class API(base.Base):
             return False
         return specs.get('encryption', {}) is not {}
 
+    def _get_volume_type_for_az(self, context, volume_type, availability_zone):
+        # Copied from task flow, check earlier to catch error before
+        # az_as_volume_type
+        type_azs = volume_utils.extract_availability_zones_from_volume_type(
+            volume_type)
+        type_az_configured = type_azs is not None
+        if type_az_configured and availability_zone not in type_azs:
+            raise exception.InvalidTypeAvailabilityZones(az=type_azs)
+
+        try:
+            az_start = availability_zone.split('-')[0]
+            if not volume_type \
+               or volume_type.id == '00000000-0000-0000-0000-000000000000':
+                # Default to AZ types
+                volume_type = objects.VolumeType.get_by_name_or_id(
+                    context, az_start)
+            else:
+                # Try to find a az specific type for the name
+                full_name = "%s-%s" % (volume_type.name, az_start)
+                volume_type = objects.VolumeType.get_by_name_or_id(
+                    context, full_name)
+        except exception.VolumeTypeNotFoundByName:
+            msg = "Volume type is not available"
+            LOG.exception(msg)
+            raise exception.InvalidInput(reason=msg)
+
+        return volume_type
+
     def create(self, context, size, name, description, snapshot=None,
                image_id=None, volume_type=None, metadata=None,
                availability_zone=None, source_volume=None,
@@ -256,6 +284,16 @@ class API(base.Base):
                 msg = _("availability_zone must be provided when creating "
                         "a volume.")
                 raise exception.InvalidInput(reason=msg)
+
+        if CONF.az_as_volume_type:
+            if snapshot or source_volume:
+                volume_type = None
+            else:
+                volume_type = self._get_volume_type_for_az(
+                    context, volume_type, availability_zone)
+
+        # ensure we pass the volume_type provisioning filter on size
+        volume_types.provision_filter_on_size(context, volume_type, size)
 
         if consistencygroup and (not cgsnapshot and not source_cg):
             if not volume_type:
