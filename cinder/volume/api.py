@@ -289,8 +289,11 @@ class API(base.Base):
                 raise exception.InvalidInput(reason=msg)
 
         if CONF.az_as_volume_type:
-            volume_type = self._get_volume_type_for_az(context, volume_type,
-                                                       availability_zone)
+            if snapshot or source_volume:
+                volume_type = None
+            else:
+                volume_type = self._get_volume_type_for_az(
+                    context, volume_type, availability_zone)
 
         # ensure we pass the volume_type provisioning filter on size
         volume_types.provision_filter_on_size(context, volume_type, size)
