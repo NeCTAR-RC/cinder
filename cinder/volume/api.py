@@ -291,6 +291,8 @@ class API(base.Base):
         if CONF.az_as_volume_type:
             volume_type = self._get_volume_type_for_az(context, volume_type,
                                                        availability_zone)
+            if snapshot or source_volume:
+                volume_type = None
 
         if consistencygroup and (not cgsnapshot and not source_cg):
             if not volume_type:
