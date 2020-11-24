@@ -33,51 +33,45 @@ class AvailabilityZoneTestCase(base.BaseVolumeTestCase):
                            'uuid': 'f838f35c-4035-464f-9792-ce60e390c13d'}])
 
     def test_list_availability_zones_cached(self):
-        azs = self.volume_api.list_availability_zones(self.user_context,
-                                                      enable_cache=True)
+        azs = self.volume_api.list_availability_zones(enable_cache=True)
         self.assertEqual([{"name": 'a', 'available': True}], list(azs))
         self.assertIsNotNone(self.volume_api.availability_zones_last_fetched)
         self.assertTrue(self.get_all.called)
-        self.volume_api.list_availability_zones(self.user_context,
-                                                enable_cache=True)
+        self.volume_api.list_availability_zones(enable_cache=True)
         self.assertEqual(1, self.get_all.call_count)
 
     def test_list_availability_zones_cached_and_refresh_on(self):
-        azs = self.volume_api.list_availability_zones(
-            self.user_context, enable_cache=True, refresh_cache=True)
+        azs = self.volume_api.list_availability_zones(enable_cache=True,
+                                                      refresh_cache=True)
         self.assertEqual([{"name": 'a', 'available': True}], list(azs))
         time_before = self.volume_api.availability_zones_last_fetched
         self.assertIsNotNone(time_before)
         self.assertEqual(1, self.get_all.call_count)
-        self.volume_api.list_availability_zones(
-            self.user_context, enable_cache=True, refresh_cache=True)
+        self.volume_api.list_availability_zones(enable_cache=True,
+                                                refresh_cache=True)
         self.assertTrue(time_before !=
                         self.volume_api.availability_zones_last_fetched)
         self.assertEqual(2, self.get_all.call_count)
 
     def test_list_availability_zones_no_cached(self):
-        azs = self.volume_api.list_availability_zones(self.user_context,
-                                                      enable_cache=False)
+        azs = self.volume_api.list_availability_zones(enable_cache=False)
         self.assertEqual([{"name": 'a', 'available': True}], list(azs))
         self.assertIsNone(self.volume_api.availability_zones_last_fetched)
 
         self.get_all.return_value[0]['disabled'] = True
-        azs = self.volume_api.list_availability_zones(self.user_context,
-                                                      enable_cache=False)
+        azs = self.volume_api.list_availability_zones(enable_cache=False)
         self.assertEqual([{"name": 'a', 'available': False}], list(azs))
         self.assertIsNone(self.volume_api.availability_zones_last_fetched)
 
     @mock.patch('oslo_utils.timeutils.utcnow')
     def test_list_availability_zones_refetched(self, mock_utcnow):
         mock_utcnow.return_value = datetime.datetime.utcnow()
-        azs = self.volume_api.list_availability_zones(self.user_context,
-                                                      enable_cache=True)
+        azs = self.volume_api.list_availability_zones(enable_cache=True)
         self.assertEqual([{"name": 'a', 'available': True}], list(azs))
         self.assertIsNotNone(self.volume_api.availability_zones_last_fetched)
         last_fetched = self.volume_api.availability_zones_last_fetched
         self.assertTrue(self.get_all.called)
-        self.volume_api.list_availability_zones(self.user_context,
-                                                enable_cache=True)
+        self.volume_api.list_availability_zones(enable_cache=True)
         self.assertEqual(1, self.get_all.call_count)
 
         # The default cache time is 3600, push past that...
@@ -95,8 +89,7 @@ class AvailabilityZoneTestCase(base.BaseVolumeTestCase):
                 'uuid': '4200b32b-0bf9-436c-86b2-0675f6ac218e',
             },
         ]
-        azs = self.volume_api.list_availability_zones(self.user_context,
-                                                      enable_cache=True)
+        azs = self.volume_api.list_availability_zones(enable_cache=True)
         azs = sorted([n['name'] for n in azs])
         self.assertEqual(['a', 'b'], azs)
         self.assertEqual(2, self.get_all.call_count)
@@ -120,7 +113,7 @@ class AvailabilityZoneTestCase(base.BaseVolumeTestCase):
         ]
 
         volume_api = cinder.volume.api.API()
-        azs = volume_api.list_availability_zones(self.user_context)
+        azs = volume_api.list_availability_zones()
         azs = sorted(azs, key=sort_func)
 
         expected = sorted([

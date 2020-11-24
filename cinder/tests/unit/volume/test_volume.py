@@ -1756,7 +1756,7 @@ class VolumeTestCase(base.BaseVolumeTestCase):
         """Test volume can't be created from snapshot in a different az."""
         volume_api = cinder.volume.api.API()
 
-        def fake_list_availability_zones(context, enable_cache=False):
+        def fake_list_availability_zones(enable_cache=False):
             return ({'name': 'nova', 'available': True},
                     {'name': 'az2', 'available': True})
 
