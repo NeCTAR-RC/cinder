@@ -231,11 +231,8 @@ class API(base.Base):
         type_azs = volume_utils.extract_availability_zones_from_volume_type(
             volume_type)
         type_az_configured = type_azs is not None
-        if type_az_configured:
-            safe_azs = list(
-                set(type_azs).intersection(availability_zone))
-            if not safe_azs:
-                raise exception.InvalidTypeAvailabilityZones(az=type_azs)
+        if type_az_configured and availability_zone not in type_azs:
+            raise exception.InvalidTypeAvailabilityZones(az=type_azs)
 
         try:
             az_start = availability_zone.split('-')[0]
