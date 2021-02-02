@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "714a1d1b_98f9cb20",
+        "filename": "cinder/volume/api.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2021-02-02T21:28:32Z",
+      "side": 0,
+      "message": "looks like this was removed by accident",
+      "revId": "50085e8d41387d34be1e3ab50845bf1123f679f9",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5",
+      "unresolved": true
+    }
+  ]
+}
