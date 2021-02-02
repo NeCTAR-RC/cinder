@@ -1,0 +1,22 @@
+Description: fix tests with mysql8
+ mysql 8 no more supports implicit user creation in GRANT statements.
+ Add explicit CREATE USER statements to work.
+Forwarded: no
+X-Not-Forwarded-Reason: up to the openstack Team
+Author: Christian Ehrhardt <christian.ehrhardt@canonical.com>
+Origin: https://dev.mysql.com/doc/refman/8.0/en/grant.html
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1845321
+Last-Update: 2019-09-26
+--- a/tools/test-setup.sh
++++ b/tools/test-setup.sh
+@@ -23,8 +23,9 @@ sudo -H mysqladmin -u root password $DB_
+ sudo -H mysql -u root -p$DB_ROOT_PW -h localhost -e "
+     DELETE FROM mysql.user WHERE User='';
+     FLUSH PRIVILEGES;
++    CREATE USER '$DB_USER'@'%' identified by '$DB_PW';
+     GRANT ALL PRIVILEGES ON *.*
+-        TO '$DB_USER'@'%' identified by '$DB_PW' WITH GRANT OPTION;"
++        TO '$DB_USER'@'%' WITH GRANT OPTION;"
+ 
+ # Now create our database.
+ mysql -u $DB_USER -p$DB_PW -h 127.0.0.1 -e "

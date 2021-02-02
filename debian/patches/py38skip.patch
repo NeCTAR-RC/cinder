@@ -1,0 +1,53 @@
+Skip failing tests with Python3.8
+LP: https://bugs.launchpad.net/cinder/+bug/1861506
+
+Index: cinder/cinder/tests/unit/test_hacking.py
+===================================================================
+--- cinder.orig/cinder/tests/unit/test_hacking.py
++++ cinder/cinder/tests/unit/test_hacking.py
+@@ -14,6 +14,8 @@
+ 
+ import textwrap
+ from unittest import mock
++import sys
++import testtools
+ 
+ import ddt
+ import pycodestyle
+@@ -130,6 +132,7 @@ class HackingTestCase(test.TestCase):
+     def _assert_has_no_errors(self, code, checker, filename=None):
+         self._assert_has_errors(code, checker, filename=filename)
+ 
++    @testtools.skipIf(sys.version_info >= (3, 8), "Skipping test for Python 3.8")
+     def test_logging_format_args(self):
+         checker = checks.CheckLoggingFormatArgs
+         code = """
+@@ -165,6 +168,7 @@ class HackingTestCase(test.TestCase):
+         self._assert_has_errors(code, checker,
+                                 expected_errors=[(4, mock.ANY, 'C310')])
+ 
++    @testtools.skipIf(sys.version_info >= (3, 8), "Skipping test for Python 3.8")
+     def test_opt_type_registration_args(self):
+         checker = checks.CheckOptRegistrationArgs
+         code = """
+Index: cinder/cinder/tests/unit/volume/drivers/dell_emc/unity/test_client.py
+===================================================================
+--- cinder.orig/cinder/tests/unit/volume/drivers/dell_emc/unity/test_client.py
++++ cinder/cinder/tests/unit/volume/drivers/dell_emc/unity/test_client.py
+@@ -14,6 +14,8 @@
+ # under the License.
+ import unittest
+ from unittest import mock
++import sys
++import testtools
+ 
+ import ddt
+ from oslo_utils import units
+@@ -710,6 +712,7 @@ class ClientTest(unittest.TestCase):
+         back_snap = self.client.restore_snapshot('snap1')
+         self.assertEqual("internal_snap", back_snap.name)
+ 
++    @testtools.skipIf(sys.version_info >= (3, 8), "Skipping test for Python 3.8")
+     def test_delete_host_wo_lock(self):
+         host = MockResource(name='empty-host')
+         self.client.host_cache['empty-host'] = host

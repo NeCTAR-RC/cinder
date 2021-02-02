@@ -1,0 +1,23 @@
+Description: Skip test that needs /etc/mtab as chroots
+  used by LP builders don't include it.
+Author: Corey Bryant <corey.bryant@canonical.com>
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1863947
+
+--- a/cinder/tests/unit/volume/drivers/test_quobyte.py
++++ b/cinder/tests/unit/volume/drivers/test_quobyte.py
+@@ -19,6 +19,7 @@
+ import os
+ import shutil
+ import traceback
++import unittest
+ from unittest import mock
+ 
+ import ddt
+@@ -441,6 +442,7 @@
+                                           any_order=False)
+             mock_validate.assert_called_once_with(self.TEST_MNT_POINT)
+ 
++    @unittest.skip("Skipped by Ubuntu: no /etc/mtab in launchpad build chroot")
+     def test_mount_quobyte_should_reraise_already_mounted_error(self):
+         """test_mount_quobyte_should_reraise_already_mounted_error
+ 
