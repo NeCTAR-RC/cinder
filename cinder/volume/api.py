@@ -425,9 +425,6 @@ class API(base.Base):
                     self.list_availability_zones(context,
                                                  enable_cache=True,
                                                  refresh_cache=True)
-                # Refresh the object here, otherwise things ain't right
-                vref = objects.Volume.get_by_id(
-                    context, vref['id'])
                 LOG.info("Create volume request issued successfully.",
                          resource=vref)
                 return vref
