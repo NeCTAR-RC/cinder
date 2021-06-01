@@ -921,9 +921,12 @@ class API(base.Base):
         # NOTE(tommylikehu): We only wrap the 'size' attribute here
         # because only the volume's host is passed and only capacity is
         # validated in the scheduler now.
+        # NOTE(aussieade) require project_id and user_id to support
+        # filter_functions like filter_function=volume.project_id != "<uuid>"
         kwargs = {'snapshot_id': snapshot.id,
                   'volume_properties': objects.VolumeProperties(
-                      size=volume.size)}
+                      size=volume.size, user_id=volume.user_id,
+                      project_id=volume.project_id)}
         self.scheduler_rpcapi.create_snapshot(context, volume, snapshot,
                                               volume.service_topic_queue,
                                               objects.RequestSpec(**kwargs))
