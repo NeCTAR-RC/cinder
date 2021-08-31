@@ -164,11 +164,16 @@ class API(base.Base):
         # volume type/availability zone naming is set as we expect.
         if not context.is_admin:
             quotas = QUOTAS.get_project_quotas(context, context.project_id)
-            no_quota_zones = [q.split('_')[-1] for q, v in quotas.items()
+            no_quota_zones = [q.split('_')[-1].split('-')[-1]
+                              for q, v in quotas.items()
                               if q.startswith('volumes_') and v['limit'] == 0]
+            quota_zones = [q.split('_')[-1].split('-')[-1]
+                           for q, v in quotas.items()
+                           if q.startswith('volumes_') and v['limit'] != 0]
             for az in azs:
                 az_base_name = az['name'].split('-')[0]
-                if az_base_name in no_quota_zones:
+                if az_base_name in no_quota_zones and \
+                   az_base_name not in quota_zones:
                     az['available'] = False
 
         LOG.info("Availability Zones retrieved successfully.")
