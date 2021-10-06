@@ -1,0 +1,38 @@
+From 01f01001187c66695eafec519f019c147cf58932 Mon Sep 17 00:00:00 2001
+From: Corey Bryant <corey.bryant@canonical.com>
+Date: Thu, 28 Jan 2021 10:30:10 -0500
+Subject: [PATCH] Tests: Add another mock psutil in quobyte tests
+
+Add a mock of psutil.disk_partitions as it appears that psutil
+can be called in this test depending on the state of the system.
+
+Change-Id: Ibdbc1c4c215dc1aa5ea728e3ff4727ddc803bd7e
+Closes-Bug: #1913607
+---
+ cinder/tests/unit/volume/drivers/test_quobyte.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/cinder/tests/unit/volume/drivers/test_quobyte.py b/cinder/tests/unit/volume/drivers/test_quobyte.py
+index bc68631c8..73663cdbb 100644
+--- a/cinder/tests/unit/volume/drivers/test_quobyte.py
++++ b/cinder/tests/unit/volume/drivers/test_quobyte.py
+@@ -441,12 +441,15 @@ class QuobyteDriverTestCase(test.TestCase):
+                                           any_order=False)
+             mock_validate.assert_called_once_with(self.TEST_MNT_POINT)
+ 
+-    def test_mount_quobyte_should_reraise_already_mounted_error(self):
++    @mock.patch.object(psutil, "disk_partitions")
++    def test_mount_quobyte_should_reraise_already_mounted_error(self,
++                                                                part_mock):
+         """test_mount_quobyte_should_reraise_already_mounted_error
+ 
+         Like test_mount_quobyte_should_suppress_already_mounted_error
+         but with ensure=False.
+         """
++        part_mock.return_value = []  # no quobyte@ devices
+         with mock.patch.object(self._driver, '_execute') as mock_execute, \
+                 mock.patch('oslo_utils.fileutils.ensure_tree') as mock_mkdir, \
+                 mock.patch('cinder.volume.drivers.quobyte.QuobyteDriver'
+-- 
+2.29.2
+
