@@ -1090,7 +1090,7 @@ class CreateVolumeFromSpecTask(flow_utils.CinderTask):
             volume.save()
 
             backup_host = self.backup_api.get_available_backup_service_host(
-                backup.host, backup.availability_zone)
+                backup.host, volume.availability_zone)
             updates = {'status': fields.BackupStatus.RESTORING,
                        'restore_volume_id': volume.id,
                        'host': backup_host}
