@@ -1528,7 +1528,7 @@ class BackupsAPITestCase(test.TestCase):
             return db.volume_get(context, volume_id)
 
         _mock_service_get_all.return_value = [
-            {'availability_zone': 'az1', 'host': 'testhost',
+            {'availability_zone': 'fake_az', 'host': 'testhost',
              'disabled': 0, 'updated_at': timeutils.utcnow(),
              'uuid': 'a3a593da-7f8d-4bb7-8b4c-f2bc1e0b4824'}]
         _mock_volume_api_create.side_effect = fake_volume_api_create
@@ -1564,7 +1564,7 @@ class BackupsAPITestCase(test.TestCase):
 
         _mock_volume_api_create.side_effect = fake_volume_api_create
         _mock_service_get_all.return_value = [
-            {'availability_zone': 'az1', 'host': 'testhost',
+            {'availability_zone': 'fake_az', 'host': 'testhost',
              'disabled': 0, 'updated_at': timeutils.utcnow(),
              'uuid': 'a3a593da-7f8d-4bb7-8b4c-f2bc1e0b4824'}]
 
