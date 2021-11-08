@@ -183,6 +183,20 @@ class API(base.Base):
             if (self._az_matched(srv, availability_zone) and srv.is_up):
                 return srv.host
             idx = idx + 1
+        # If specified zone is auckland and no running service found
+        # then return None. i.e. There is no fallback option as no
+        # other Nectar zone uses the same backup backend as auckland.
+        if availability_zone == 'auckland':
+            return None
+        # If no running service with matching availability zone is found
+        # then get the next running service with any AU availability zone.
+        idx = 0
+        while idx < len(services):
+            srv = services[idx]
+            if (not self._az_matched(srv, 'auckland') and
+                    srv.is_up):
+                return srv.host
+            idx = idx + 1
         return None
 
     def get_available_backup_service_host(self, host: str, az: str) -> str:
