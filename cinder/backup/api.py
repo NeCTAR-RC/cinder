@@ -184,12 +184,22 @@ class API(base.Base):
         return self._get_available_backup_service_host(host, az)
 
     def _get_available_backup_service_host(self, host, az):
-        """Return an appropriate backup service host."""
+        """Return an appropriate backup service host.
+
+        If a host is specified and it is enabled then return that backup
+        host.
+        If backup_use_same_host is true and a host is specified then only
+        return the host if it is enabled, otherwise raise an exception.
+        If no host is specified then get any available backup host in az.
+        """
         backup_host = None
-        if not host or not CONF.backup_use_same_host:
+        if host:
+            if self._is_backup_service_enabled(az, host):
+                backup_host = host
+            elif not CONF.backup_use_same_host:
+                backup_host = self._get_any_available_backup_service(az)
+        else:
             backup_host = self._get_any_available_backup_service(az)
-        elif self._is_backup_service_enabled(az, host):
-            backup_host = host
         if not backup_host:
             raise exception.ServiceNotFound(service_id='cinder-backup')
         return backup_host
