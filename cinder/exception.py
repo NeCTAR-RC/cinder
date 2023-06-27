@@ -1076,3 +1076,10 @@ class CinderAcceleratorError(CinderException):
 class SnapshotLimitReached(CinderException):
     message = _("Exceeded the configured limit of "
                 "%(set_limit)s snapshots per volume.")
+
+
+class ConflictNovaUsingAttachment(CinderException):
+    message = _("Detach volume from instance %(instance_id)s using the "
+                "Compute API")
+    code = 409
+    safe = True

@@ -260,6 +260,7 @@ class VolumeProtectionTests(test_base.CinderPolicyTests):
         self.assertEqual(HTTPStatus.ACCEPTED, response.status_int)
 
         body = {"os-detach": {}}
+        # Detach for user call succeeds because the volume has no attachments
         response = self._get_request_response(admin_context, path, 'POST',
                                               body=body)
         self.assertEqual(HTTPStatus.ACCEPTED, response.status_int)
@@ -280,6 +281,7 @@ class VolumeProtectionTests(test_base.CinderPolicyTests):
                                               body=body)
         self.assertEqual(HTTPStatus.ACCEPTED, response.status_int)
 
+        # Succeeds for a user call because there are no attachments
         body = {"os-detach": {}}
         response = self._get_request_response(user_context, path, 'POST',
                                               body=body)
@@ -376,6 +378,7 @@ class VolumeProtectionTests(test_base.CinderPolicyTests):
                        'terminate_connection')
     def test_admin_can_initialize_terminate_conn(self, mock_t, mock_i):
         admin_context = self.admin_context
+        admin_context.service_roles = ['service']
 
         volume = self._create_fake_volume(admin_context)
         path = '/v3/%(project_id)s/volumes/%(volume_id)s/action' % {
@@ -398,6 +401,7 @@ class VolumeProtectionTests(test_base.CinderPolicyTests):
                        'terminate_connection')
     def test_owner_can_initialize_terminate_conn(self, mock_t, mock_i):
         user_context = self.user_context
+        user_context.service_roles = ['service']
 
         volume = self._create_fake_volume(user_context)
         path = '/v3/%(project_id)s/volumes/%(volume_id)s/action' % {
