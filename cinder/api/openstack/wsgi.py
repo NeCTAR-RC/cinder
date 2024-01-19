@@ -804,8 +804,9 @@ class Resource(wsgi.Application):
                 return Fault(webob.exc.HTTPBadRequest(
                     explanation=str(e)))
             except exception.InvalidGlobalAPIVersion as e:
-                return Fault(webob.exc.HTTPNotAcceptable(
-                    explanation=str(e)))
+                if request.path != '/':
+                    return Fault(webob.exc.HTTPNotAcceptable(
+                        explanation=str(e)))
 
         # Identify the action, its arguments, and the requested
         # content type
