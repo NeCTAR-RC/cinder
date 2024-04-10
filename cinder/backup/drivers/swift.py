@@ -46,6 +46,7 @@
 import io
 import socket
 
+from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import secretutils
@@ -192,7 +193,12 @@ class SwiftBackupDriver(chunkeddriver.ChunkedBackupDriver):
 
         sa_plugin = service_auth.get_service_auth_plugin()
         if sa_plugin is not None:
-            result['X-Service-Token'] = sa_plugin.get_token()
+            keystone_session = ks_loading.load_session_from_conf_options(
+                CONF,
+                'service_user',
+                auth=sa_plugin)
+
+            result['X-Service-Token'] = sa_plugin.get_token(keystone_session)
 
         return result
 
