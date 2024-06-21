@@ -425,7 +425,7 @@ class VolumeRPCAPITestCase(test.RPCAPITestCase):
                                'async_call': True,
                            },
                            retval=None,
-                           version='3.17')
+                           version='3.16')
 
     @ddt.data(None, 'mycluster')
     def test_get_backup_device_call(self, cluster_name):

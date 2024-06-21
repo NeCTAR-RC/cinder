@@ -364,9 +364,9 @@ class VolumeAPI(rpc.RPCAPI):
         return cctxt.call(ctxt, 'get_capabilities', discover=discover)
 
     def get_backup_device(self, ctxt, backup, volume):
-        cctxt = self._get_cctxt(volume.service_topic_queue, ('3.17', '3.2',
+        cctxt = self._get_cctxt(volume.service_topic_queue, ('3.16', '3.2',
                                                              '3.0'))
-        if cctxt.can_send_version('3.17'):
+        if cctxt.can_send_version('3.16'):
             cctxt.cast(ctxt, 'get_backup_device', backup=backup,
                        want_objects=True, async_call=True)
             backup_obj = None
