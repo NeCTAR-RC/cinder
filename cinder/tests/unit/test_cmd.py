@@ -2496,3 +2496,147 @@ class TestVolumeSharedTargetsOnlineMigration(test.TestCase):
             'uuid': 'f080f895-cff2-4eb3-9c61-050c060b59ad'}
         utils.create_service(ctxt, values)
         self.ctxt = ctxt
+
+
+class TestCinderManageQuotaCommands(test.TestCase):
+    """Tests for ``cinder-manage quota check`` and ``quota sync``.
+
+    These run against the test database rather than mocking the DB layer,
+    since the behaviour under test is the interaction between the usage
+    rows and the resource tables.
+    """
+
+    def setUp(self):
+        super(TestCinderManageQuotaCommands, self).setUp()
+        sys.argv = ['cinder-manage']
+        self.ctxt = context.get_admin_context()
+        self.cmds = cinder_manage.QuotaCommands()
+
+    def _usages(self, project_id):
+        usages = sqlalchemy_api.quota_usage_get_all_by_project(
+            self.ctxt, project_id)
+        usages.pop('project_id')
+        return usages
+
+    def _create_usage(self, project_id, resource, in_use):
+        with sqlalchemy_api.main_context_manager.writer.using(self.ctxt):
+            sqlalchemy_api._quota_usage_create(
+                self.ctxt, project_id, resource, in_use, 0, None)
+
+    def _create_project_resources(self, project_id):
+        """Two volumes (10G + 5G) and a 10G snapshot, no usage rows."""
+        vol = utils.create_volume(self.ctxt, project_id=project_id, size=10)
+        utils.create_volume(self.ctxt, project_id=project_id, size=5)
+        utils.create_snapshot(self.ctxt, vol.id, project_id=project_id)
+        self.assertEqual({}, self._usages(project_id))
+
+    def _run(self, method, *args):
+        with mock.patch('sys.stdout', new=io.StringIO()) as fake_out:
+            method(*args)
+        return fake_out.getvalue()
+
+    def _run_expect_exit(self, method, *args):
+        with mock.patch('sys.stdout', new=io.StringIO()) as fake_out:
+            exit = self.assertRaises(SystemExit, method, *args)
+        self.assertEqual(1, exit.code)
+        return fake_out.getvalue()
+
+    def test_check_project_without_resources(self):
+        out = self._run(self.cmds.check, fake.PROJECT_ID)
+        self.assertIn('Project id %s has no quota usage or quota tracked '
+                      'resources. Nothing to do.' % fake.PROJECT_ID, out)
+
+    def test_check_reports_missing_usage_rows(self):
+        self._create_project_resources(fake.PROJECT_ID)
+
+        out = self._run_expect_exit(self.cmds.check, fake.PROJECT_ID)
+
+        self.assertIn('\tvolumes: missing usage entry actual=2\n', out)
+        self.assertIn('\tgigabytes: missing usage entry actual=25\n', out)
+        self.assertIn('\tsnapshots: missing usage entry actual=1\n', out)
+        # Resources that are not in use are not reported
+        self.assertNotIn('backups', out)
+        self.assertNotIn('groups', out)
+        self.assertNotIn('fixed', out)
+        # check never writes
+        self.assertEqual({}, self._usages(fake.PROJECT_ID))
+
+    def test_sync_creates_missing_usage_rows(self):
+        self._create_project_resources(fake.PROJECT_ID)
+
+        out = self._run(self.cmds.sync, fake.PROJECT_ID)
+
+        self.assertIn('\tvolumes: missing usage entry actual=2 - fixed\n',
+                      out)
+        usages = self._usages(fake.PROJECT_ID)
+        self.assertEqual({'in_use': 2, 'reserved': 0}, usages['volumes'])
+        self.assertEqual({'in_use': 25, 'reserved': 0}, usages['gigabytes'])
+        self.assertEqual({'in_use': 1, 'reserved': 0}, usages['snapshots'])
+        # Only rows for resources that are in use are created
+        self.assertNotIn('backups', usages)
+        self.assertNotIn('backup_gigabytes', usages)
+        self.assertNotIn('groups', usages)
+        self.assertNotIn('per_volume_gigabytes', usages)
+
+        # A following check is clean
+        out = self._run(self.cmds.check, fake.PROJECT_ID)
+        self.assertNotIn('missing', out)
+        self.assertNotIn('invalid', out)
+
+    def test_sync_persists_fix_of_existing_usage_row(self):
+        # Regression test for bug #2104322: the fix must be committed.
+        utils.create_volume(self.ctxt, project_id=fake.PROJECT_ID, size=10)
+        self._create_usage(fake.PROJECT_ID, 'volumes', 5)
+        self._create_usage(fake.PROJECT_ID, 'gigabytes', 10)
+
+        out = self._run_expect_exit(self.cmds.check, fake.PROJECT_ID)
+        self.assertIn('\tvolumes: invalid usage saved=5 actual=1\n', out)
+        self.assertEqual(5, self._usages(fake.PROJECT_ID)['volumes']['in_use'])
+
+        out = self._run(self.cmds.sync, fake.PROJECT_ID)
+        self.assertIn('\tvolumes: invalid usage saved=5 actual=1 - fixed\n',
+                      out)
+        usages = self._usages(fake.PROJECT_ID)
+        self.assertEqual({'in_use': 1, 'reserved': 0}, usages['volumes'])
+        self.assertEqual({'in_use': 10, 'reserved': 0}, usages['gigabytes'])
+
+    def test_check_ignores_unknown_resource_rows(self):
+        utils.create_volume(self.ctxt, project_id=fake.PROJECT_ID, size=10)
+        self._create_usage(fake.PROJECT_ID, 'volumes', 1)
+        self._create_usage(fake.PROJECT_ID, 'gigabytes', 10)
+        self._create_usage(fake.PROJECT_ID, 'volumes_deleted_type', 3)
+
+        out = self._run(self.cmds.check, fake.PROJECT_ID)
+        self.assertIn('\tvolumes_deleted_type: unknown resource, ignored\n',
+                      out)
+
+    def test_get_quota_projects(self):
+        # Project with resources but no usage rows
+        self._create_project_resources(fake.PROJECT_ID)
+        # Project with usage rows but no resources
+        self._create_usage(fake.PROJECT2_ID, 'volumes', 0)
+        # Project with only a deleted volume
+        utils.create_volume(self.ctxt, project_id=fake.PROJECT3_ID).destroy()
+
+        projects = self.cmds._get_quota_projects(self.ctxt, None)
+        self.assertEqual(sorted([fake.PROJECT_ID, fake.PROJECT2_ID]),
+                         projects)
+        self.assertEqual([fake.PROJECT_ID],
+                         self.cmds._get_quota_projects(self.ctxt,
+                                                       fake.PROJECT_ID))
+        self.assertEqual([], self.cmds._get_quota_projects(self.ctxt,
+                                                           fake.PROJECT3_ID))
+
+    def test_check_all_projects_exit_status(self):
+        # One clean project and one out of sync project: check must exit 1
+        utils.create_volume(self.ctxt, project_id=fake.PROJECT2_ID, size=1)
+        self._create_usage(fake.PROJECT2_ID, 'volumes', 1)
+        self._create_usage(fake.PROJECT2_ID, 'gigabytes', 1)
+        self._create_project_resources(fake.PROJECT_ID)
+
+        out = self._run_expect_exit(self.cmds.check, None)
+        self.assertIn('Processing quota usage for project %s' %
+                      fake.PROJECT_ID, out)
+        self.assertIn('Processing quota usage for project %s' %
+                      fake.PROJECT2_ID, out)
+        self.assertIn('Action successfully completed', out)

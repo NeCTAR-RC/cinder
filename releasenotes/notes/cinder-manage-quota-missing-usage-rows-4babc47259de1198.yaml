@@ -1,0 +1,20 @@
+---
+fixes:
+  - |
+    ``cinder-manage quota check`` and ``cinder-manage quota sync`` now
+    detect projects that own volumes, snapshots, backups or groups but have
+    no ``quota_usages`` rows at all (for example after the project's quota
+    set was deleted, which also removes its usage rows). Such projects were
+    previously skipped with "has no quota usage. Nothing to do." while the
+    API reported their usage as zero. ``check`` now reports each in-use
+    resource without a usage row and ``sync`` creates the row with the
+    actual usage.
+  - |
+    ``cinder-manage quota check`` now exits with status 1 when any project
+    is out of sync. Previously the per-project results were combined in a
+    way that always produced a clean exit status.
+  - |
+    ``cinder-manage quota check`` and ``sync`` no longer fail with a
+    ``KeyError`` when a project has a usage row for a resource that is no
+    longer known (for example a deleted volume type); the row is reported
+    and ignored.

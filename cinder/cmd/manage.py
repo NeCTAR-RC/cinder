@@ -377,35 +377,49 @@ class QuotaCommands(object):
         """
         self._check_sync(project_id, do_fix=True)
 
+    # Tables that quota usage is calculated from, besides the quota_usages
+    # table itself.  A project can own resources without having any
+    # quota_usages rows (for example after its quota set was deleted, which
+    # also removes its usage and reservation rows), so we must look at these
+    # tables too or such projects would be invisible to check and sync.
+    QUOTA_PROJECT_MODELS = (
+        models.QuotaUsage,
+        models.Volume,
+        models.Snapshot,
+        models.Backup,
+        models.Group,
+    )
+
     @db_api.main_context_manager.reader
     def _get_quota_projects(self,
                             ctxt: context.RequestContext,
                             project_id: Optional[str]) -> list[str]:
-        """Get project ids that have quota_usage entries."""
+        """Get project ids that have quota usage or quota tracked resources."""
         if project_id:
-            model = models.QuotaUsage
-            # If the project does not exist
-            if not ctxt.session.query(
-                db_api.sql.exists()
-                .where(
-                    db_api.and_(
-                        model.project_id == project_id,
-                        ~model.deleted,
-                    ),
-                )
-            ).scalar():
-                print(
-                    'Project id %s has no quota usage. Nothing to do.' %
-                    project_id,
-                )
-                return []
-            return [project_id]
+            for model in self.QUOTA_PROJECT_MODELS:
+                if ctxt.session.query(
+                    db_api.sql.exists()
+                    .where(
+                        db_api.and_(
+                            model.project_id == project_id,
+                            ~model.deleted,
+                        ),
+                    )
+                ).scalar():
+                    return [project_id]
+            print(
+                'Project id %s has no quota usage or quota tracked '
+                'resources. Nothing to do.' % project_id,
+            )
+            return []
 
-        projects = db_api.get_projects(ctxt,
-                                       models.QuotaUsage,
-                                       read_deleted="no")
-        project_ids = [row.project_id for row in projects]
-        return project_ids
+        project_ids: set[str] = set()
+        for model in self.QUOTA_PROJECT_MODELS:
+            projects = db_api.get_projects(ctxt, model, read_deleted="no")
+            project_ids.update(
+                row.project_id for row in projects if row.project_id
+            )
+        return sorted(project_ids)
 
     def _get_usages(self,
                     ctxt: context.RequestContext,
@@ -500,7 +514,7 @@ class QuotaCommands(object):
         discrepancy = False
 
         for project in projects:
-            discrepancy &= self._check_project_sync(
+            discrepancy |= self._check_project_sync(
                 ctxt,
                 project,
                 do_fix,
@@ -520,12 +534,14 @@ class QuotaCommands(object):
 
         discrepancy = False
         action_msg = ' - fixed' if do_fix else ''
+        # Actual usage per resource, as calculated from the resource tables
+        actual: dict[str, int] = {}
 
         # NOTE: It's important to always get the quota first and then the
         # reservations to prevent deadlocks with quota commit and rollback from
         # running Cinder services.
 
-        # We only want to sync existing quota usage rows
+        # Start with the existing quota usage rows
         usages = self._get_usages(ctxt, resources, project)
 
         # Check for duplicated entries (bug#1484343)
@@ -538,6 +554,11 @@ class QuotaCommands(object):
         # Check quota and reservations
         for usage in usages:
             resource_name = usage.resource
+            if resource_name not in resources:
+                # Usage row for a resource we no longer know about (e.g. a
+                # deleted volume type).  Nothing to sync it against.
+                print('\t%s: unknown resource, ignored' % resource_name)
+                continue
             # Get the correct value for this quota usage resource
             updates = db_api._get_sync_updates(
                 ctxt,
@@ -546,6 +567,7 @@ class QuotaCommands(object):
                 resource_name,
             )
             in_use = updates[resource_name]
+            actual[resource_name] = in_use
             if in_use != usage.in_use:
                 print(
                     '\t%s: invalid usage saved=%s actual=%s%s' %
@@ -576,6 +598,79 @@ class QuotaCommands(object):
                 discrepancy = True
                 if do_fix:
                     usage.reserved = num_reservations
+
+        # Resources that are in use but have no quota usage row at all.  The
+        # API reports these as in_use=0 and quota check/sync used to ignore
+        # them.  quota_reserve recreates missing rows with the real usage on
+        # the next reservation, so we only report (and create) rows for
+        # resources that are actually in use.
+        discrepancy |= self._check_missing_usages(
+            ctxt, project, do_fix, resources, actual, action_msg,
+        )
+
+        return discrepancy
+
+    def _check_missing_usages(self,
+                              ctxt: context.RequestContext,
+                              project: str,
+                              do_fix: bool,
+                              resources,
+                              actual: dict[str, int],
+                              action_msg: str) -> bool:
+        """Report (and optionally create) usage rows missing for a project.
+
+        ``actual`` holds the usage already calculated for resources that
+        have a row; it is updated with the values calculated here.
+        """
+        discrepancy = False
+
+        def _is_per_type(resource) -> bool:
+            return getattr(resource, 'volume_type_id', None) is not None
+
+        # Base resources first so we know whether per volume type resources
+        # are worth calculating at all.
+        missing = sorted(
+            (name for name in resources if name not in actual),
+            key=lambda name: (_is_per_type(resources[name]), name),
+        )
+        for resource_name in missing:
+            resource = resources[resource_name]
+            # Resources without a sync method (per_volume_gigabytes) never
+            # have usage rows.
+            if not getattr(resource, 'sync', None):
+                continue
+            # A project with no volumes or snapshots cannot have per type
+            # usage, so skip the per type queries.
+            if (_is_per_type(resource) and
+                    not actual.get('volumes') and
+                    not actual.get('snapshots')):
+                continue
+
+            updates = db_api._get_sync_updates(
+                ctxt,
+                project,
+                resources,
+                resource_name,
+            )
+            in_use = updates[resource_name]
+            actual[resource_name] = in_use
+            if not in_use:
+                continue
+
+            print(
+                '\t%s: missing usage entry actual=%s%s' %
+                (resource_name, in_use, action_msg)
+            )
+            discrepancy = True
+            if do_fix:
+                db_api._quota_usage_create(
+                    ctxt,
+                    project,
+                    resource_name,
+                    in_use,
+                    0,
+                    None,
+                )
 
         return discrepancy
 
